@@ -1,0 +1,5 @@
+{
+  "fmt": {
+    "exclude": ["target/", "patch/", "workdir/", "snapshot_bin/"]
+  }
+}

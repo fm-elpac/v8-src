@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [ "termux-docker" ]
+
+# build deno 1.35.0 for aarch64-linux-android with termux-docker
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # download `librusty_v8_release_aarch64-linux-android.a`
+    - uses: robinraju/release-downloader@v1.8
+      id: dlv8
+      with: 
+        repository: "fm-elpac/v8-src"
+        tag: "v0.2.0"
+        fileName: "v0.74.1-librusty_v8_release_aarch64-linux-android.a.zst"
+    - run: mkdir -p lib_v8/v0.74.2 && cp $FILE lib_v8/v0.74.2/librusty_v8_release_aarch64-linux-android.a.zst
+      env:
+        FILE: ${{ fromJson(steps.dlv8.outputs.downloaded_files)[0] }}
+    - run: cd lib_v8/v0.74.2 && zstd -d librusty_v8_release_aarch64-linux-android.a.zst
+    # fix rusty_v8/build.rs error
+    - uses: robinraju/release-downloader@v1.8
+      id: dlv8_2
+      with: 
+        repository: "denoland/rusty_v8"
+        tag: "v0.74.2"
+        fileName: "librusty_v8_release_x86_64-unknown-linux-gnu.a"
+    - run: cp $FILE lib_v8/v0.74.2
+      env:
+        FILE: ${{ fromJson(steps.dlv8_2.outputs.downloaded_files)[0] }}
+
+    # build env setup
+    - uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+    - uses: docker/setup-qemu-action@v2
+      with:
+        platforms: arm64
+    - uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r25c
+
+    - run: cargo fetch
+    # symlink `cargo_src` -> ~/.cargo/registry/src/XXX/
+    - run: cargo metadata | deno run -A get_cargo_src.js
+
+    # copy source code
+    - run: make fetch_code
+    # apply patch
+    - run: cp -r patch/* workdir/
+
+    # setup QEMU aarch64 for termux-docker
+    - run: docker run --rm --privileged aptman/qus -s -- -p aarch64 arm
+
+    # build `deno-mksnapshot-runtime`
+    - run: cd workdir/deno_runtime-0.118.0 && rustup target add aarch64-linux-android
+    - run: cd workdir/deno_runtime-0.118.0 && mv build.rs build-1.rs
+    - run: make deno-mksnapshot-runtime
+      env:
+        NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+    - run: mkdir -p snapshot_bin && cp workdir/deno_runtime-0.118.0/target/aarch64-linux-android/release/deno-mksnapshot-runtime snapshot_bin
+    # run `deno-mksnapshot-runtime` to get snapshot_bin
+    - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && ./deno-mksnapshot-runtime"
+
+    # build `deno-mksnapshot`
+    - run: cp -r patch2/* workdir/
+    - run: cd workdir/deno-1.35.0 && rustup target add aarch64-linux-android
+    - run: cd workdir/deno-1.35.0 && mv build.rs build-1.rs
+    - run: make deno-mksnapshot
+      env:
+        NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+    # run `deno-mksnapshot` to get snapshot_bin
+    - run: cp workdir/deno-1.35.0/target/aarch64-linux-android/release/deno-mksnapshot snapshot_bin
+    - run: make dts_file
+    - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && ./deno-mksnapshot"
+
+    # build `deno`
+    - run: cp -r patch3/* workdir/
+    - run: make deno
+      env:
+        NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+    # upload deno
+    - run: cd workdir/deno-1.35.0/target/aarch64-linux-android/release && zstd -19 deno
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: deno-1.35.0_aarch64-linux-android
+        path: workdir/deno-1.35.0/target/aarch64-linux-android/release/deno.zst
+
+    # test: SNAPSHOT.bin
+    - run: mkdir deno_snapshot_bin && cp snapshot_bin/*.bin deno_snapshot_bin
+    - run: tar -cvf deno_snapshot_bin.tar.zstd --zstd deno_snapshot_bin
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: deno_snapshot_bin.tar.zstd
+        path: deno_snapshot_bin.tar.zstd
+
+# TODO

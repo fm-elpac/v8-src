@@ -1,0 +1,10 @@
+[package]
+name = "build_deno"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+deno = "1.35.0"
+
+# fix for cargo metadata
+v8 = "0.74.2"
