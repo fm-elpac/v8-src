@@ -1,6 +1,6 @@
 # deno-android
 
-<https://github.com/fm-elpac/v8-src/tree/termux-docker>
+<https://github.com/fm-elpac/v8-src/tree/deno-android-qemu-docker>
 
 This project use [`termux-docker`](https://github.com/termux/termux-docker) to
 auto build [`deno`](https://github.com/denoland/deno) for

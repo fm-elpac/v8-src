@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "deno-android-qemu-docker" ]
 
-# build deno 1.35.0 for aarch64-linux-android with TODO
+# build deno 1.35.0 for aarch64-linux-android with termux-docker
 
 jobs:
   build:
@@ -16,13 +16,8 @@ jobs:
     - uses: docker/setup-qemu-action@v2
       with:
         platforms: arm64
-    # TODO
     # setup QEMU aarch64 for termux-docker
     - run: docker run --rm --privileged aptman/qus -s -- -p aarch64 arm
-    # test termux-docker
-    - run: docker run --privileged --rm termux/termux-docker:aarch64 bash -c "find /"
-    # TODO
-    - run: false
 
     # download `librusty_v8_release_aarch64-linux-android.a`
     - uses: robinraju/release-downloader@v1.8
@@ -73,8 +68,7 @@ jobs:
 
     - run: mkdir -p snapshot_bin && cp workdir/deno_runtime-0.118.0/target/aarch64-linux-android/release/deno-mksnapshot-runtime snapshot_bin
     # run `deno-mksnapshot-runtime` to get snapshot_bin
-    # TODO
-    - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && ./deno-mksnapshot-runtime"
+    - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib/ && ./deno-mksnapshot-runtime"
 
     # build `deno-mksnapshot`
     - run: cp -r patch2/* workdir/
@@ -88,7 +82,7 @@ jobs:
     - run: cp workdir/deno-1.35.0/target/aarch64-linux-android/release/deno-mksnapshot snapshot_bin
     - run: make dts_file
     # TODO
-    - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && ./deno-mksnapshot"
+    - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib/ && ./deno-mksnapshot"
 
     # build `deno`
     - run: cp -r patch3/* workdir/
