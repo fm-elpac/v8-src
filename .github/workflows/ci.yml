@@ -68,7 +68,8 @@ jobs:
 
     - run: mkdir -p snapshot_bin && cp workdir/deno_runtime-0.118.0/target/aarch64-linux-android/release/deno-mksnapshot-runtime snapshot_bin
     # run `deno-mksnapshot-runtime` to get snapshot_bin
-    - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib/ && ./deno-mksnapshot-runtime"
+    # FIXME: error PermissionDenied
+    - run: id && docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib/ && id && ls -al && ./deno-mksnapshot-runtime"
 
     # build `deno-mksnapshot`
     - run: cp -r patch2/* workdir/
