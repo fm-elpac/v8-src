@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "termux-docker" ]
+    branches: [ "deno-android-qemu-docker" ]
 
-# build deno 1.35.0 for aarch64-linux-android with termux-docker
+# build deno 1.35.0 for aarch64-linux-android with TODO
 
 jobs:
   build:
@@ -56,6 +56,7 @@ jobs:
     # apply patch
     - run: cp -r patch/* workdir/
 
+    # TODO
     # setup QEMU aarch64 for termux-docker
     - run: docker run --rm --privileged aptman/qus -s -- -p aarch64 arm
 
@@ -68,6 +69,7 @@ jobs:
 
     - run: mkdir -p snapshot_bin && cp workdir/deno_runtime-0.118.0/target/aarch64-linux-android/release/deno-mksnapshot-runtime snapshot_bin
     # run `deno-mksnapshot-runtime` to get snapshot_bin
+    # TODO
     - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && ./deno-mksnapshot-runtime"
 
     # build `deno-mksnapshot`
@@ -81,6 +83,7 @@ jobs:
     # run `deno-mksnapshot` to get snapshot_bin
     - run: cp workdir/deno-1.35.0/target/aarch64-linux-android/release/deno-mksnapshot snapshot_bin
     - run: make dts_file
+    # TODO
     - run: docker run --privileged --mount type=bind,src=$(pwd)/snapshot_bin,target=/snapshot_bin --rm termux/termux-docker:aarch64 bash -c "cd /snapshot_bin && ./deno-mksnapshot"
 
     # build `deno`
