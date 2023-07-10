@@ -13,6 +13,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - uses: docker/setup-qemu-action@v2
+      with:
+        platforms: arm64
+    # TODO
+    # setup QEMU aarch64 for termux-docker
+    - run: docker run --rm --privileged aptman/qus -s -- -p aarch64 arm
+    # test termux-docker
+    - run: docker run --privileged --rm termux/termux-docker:aarch64 bash -c "find /"
+    # TODO
+    - run: false
+
     # download `librusty_v8_release_aarch64-linux-android.a`
     - uses: robinraju/release-downloader@v1.8
       id: dlv8
@@ -39,9 +50,6 @@ jobs:
     - uses: denoland/setup-deno@v1
       with:
         deno-version: v1.x
-    - uses: docker/setup-qemu-action@v2
-      with:
-        platforms: arm64
     - uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
@@ -55,10 +63,6 @@ jobs:
     - run: make fetch_code
     # apply patch
     - run: cp -r patch/* workdir/
-
-    # TODO
-    # setup QEMU aarch64 for termux-docker
-    - run: docker run --rm --privileged aptman/qus -s -- -p aarch64 arm
 
     # build `deno-mksnapshot-runtime`
     - run: cd workdir/deno_runtime-0.118.0 && rustup target add aarch64-linux-android
