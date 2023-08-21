@@ -11,6 +11,7 @@
 本项目使用 github actions 编译 [rusty_v8](https://github.com/denoland/rusty_v8):
 
 + `librusty_v8_release_aarch64-linux-android.a`
++ `librusty_v8_release_x86_64-linux-android.a`
 
 
 TODO
