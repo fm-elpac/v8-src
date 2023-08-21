@@ -1,0 +1,37 @@
+diff '--color=auto' -ru workdir-1/deno-1.36.1/Cargo.toml workdir/deno-1.36.1/Cargo.toml
+--- workdir-1/deno-1.36.1/Cargo.toml	2023-08-21 13:43:45.405846998 +0800
++++ workdir/deno-1.36.1/Cargo.toml	2023-08-21 14:33:38.331594981 +0800
+@@ -385,3 +385,9 @@
+ 
+ [target."cfg(windows)".build-dependencies.winres]
+ version = "=0.1.12"
++
++[patch.crates-io]
++v8 = { path = "../v8-0.75.0" }
++#deno_runtime = { path = "../deno_runtime-0.123.0" }
++deno_core = { path = "../deno_core-0.200.0" }
++serde_v8 = { path = "../serde_v8-0.111.0" }
+diff '--color=auto' -ru workdir-1/deno_core-0.200.0/Cargo.toml workdir/deno_core-0.200.0/Cargo.toml
+--- workdir-1/deno_core-0.200.0/Cargo.toml	2023-08-21 14:23:37.195216886 +0800
++++ workdir/deno_core-0.200.0/Cargo.toml	2023-08-21 14:32:47.164261579 +0800
+@@ -91,7 +91,7 @@
+ ]
+ 
+ [dependencies.v8]
+-version = "0.74.3"
++version = "0.75.0"
+ default-features = false
+ 
+ [dev-dependencies.bencher]
+diff '--color=auto' -ru workdir-1/serde_v8-0.111.0/Cargo.toml workdir/serde_v8-0.111.0/Cargo.toml
+--- workdir-1/serde_v8-0.111.0/Cargo.toml	2023-08-21 14:25:49.665241353 +0800
++++ workdir/serde_v8-0.111.0/Cargo.toml	2023-08-21 14:33:20.827796709 +0800
+@@ -58,7 +58,7 @@
+ version = "1.0.40"
+ 
+ [dependencies.v8]
+-version = "0.74.3"
++version = "0.75.0"
+ default-features = false
+ 
+ [dev-dependencies.bencher]

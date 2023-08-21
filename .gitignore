@@ -1,0 +1,9 @@
+target/
+workdir/
+workdir-1/
+lib_v8/
+snapshot_bin/
+
+/cargo_src
+Cargo.lock
+deno.lock
