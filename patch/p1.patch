@@ -1,6 +1,6 @@
 diff '--color=auto' -ru -x Cargo.lock workdir-1/v8-0.75.0/build.rs workdir/v8-0.75.0/build.rs
 --- workdir-1/v8-0.75.0/build.rs	2023-08-21 13:43:23.899828209 +0800
-+++ workdir/v8-0.75.0/build.rs	2023-08-22 14:50:01.136960948 +0800
++++ workdir/v8-0.75.0/build.rs	2023-08-22 15:10:35.935818835 +0800
 @@ -145,7 +145,7 @@
      let clang_base_path = clang_download();
      gn_args.push(format!("clang_base_path={:?}", clang_base_path));
@@ -10,11 +10,12 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/v8-0.75.0/build.rs workdir/v8-0.
        gn_args.push("treat_warnings_as_errors=false".to_string());
      }
    }
-@@ -180,9 +180,15 @@
+@@ -180,9 +180,19 @@
        maybe_install_sysroot("arm64");
        maybe_install_sysroot("amd64");
      };
 +    if target_triple == "x86_64-linux-android" {
++      gn_args.push(r#"target_cpu="x64""#.to_string());
 +      gn_args.push("use_sysroot=true".to_string());
 +      maybe_install_sysroot("amd64");
 +    }
@@ -24,6 +25,9 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/v8-0.75.0/build.rs workdir/v8-0.
 +    if target_triple.contains("android") {
 +      if target_triple == "aarch64-linux-android" {
 +        gn_args.push(r#"v8_target_cpu="arm64""#.to_string());
++      }
++      if target_triple == "x86_64-linux-android" {
++        gn_args.push(r#"v8_target_cpu="x64""#.to_string());
 +      }
        gn_args.push(r#"target_os="android""#.to_string());
  
