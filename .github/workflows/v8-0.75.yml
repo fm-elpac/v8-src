@@ -62,6 +62,10 @@ jobs:
     # symlink `cargo_src` -> ~/.cargo/registry/src/XXX/
     - run: cargo metadata | deno run -A get_cargo_src.js
 
+    - run: cp -r cargo_src/v8-0.75.0 v8_src
+    # apply patch
+    - run: cd v8_src && patch -p2 < ../patch/p1.patch
+
     # FIXME: we have to checkout v8 source, because there is missing files in rusty_v8
     #### start checkout v8 source
     - run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git --single-branch --depth=1
@@ -79,7 +83,6 @@ jobs:
     #### done checkout v8 source
 
     # copy missing files
-    - run: cp -r cargo_src/v8-0.75.0 v8_src
     - run: cp -rn v8/v8/build/android v8_src/build || true
 
     # build
