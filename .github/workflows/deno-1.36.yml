@@ -57,7 +57,8 @@ jobs:
     - run: cd workdir && patch -p1 < ../patch_set/p2.patch
     - run: rm workdir/v8-0.75.0/rust-toolchain.toml
 
-    - run: echo $ANDROID_NDK_HOME
+    # show build env
+    - run: env
     # build `deno`
     - run: WORKDIR=$(pwd)/workdir CARGO_DIR=~/.cargo make deno
 
