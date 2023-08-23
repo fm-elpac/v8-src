@@ -25,8 +25,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/build.rs workdir/den
    .expect(
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/Cargo.toml workdir/deno-1.36.1/Cargo.toml
 --- workdir-1/deno-1.36.1/Cargo.toml	2023-08-21 13:43:45.405846998 +0800
-+++ workdir/deno-1.36.1/Cargo.toml	2023-08-21 18:15:47.361783037 +0800
-@@ -385,3 +385,12 @@
++++ workdir/deno-1.36.1/Cargo.toml	2023-08-23 19:13:42.345261152 +0800
+@@ -385,3 +385,13 @@
  
  [target."cfg(windows)".build-dependencies.winres]
  version = "=0.1.12"
@@ -39,6 +39,7 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/Cargo.toml workdir/d
 +libz-ng-sys = { path = "../libz-ng-sys-1.1.12" }
 +deno_fs = { path = "../deno_fs-0.25.0" }
 +deno_node = { path = "../deno_node-0.52.0" }
++libsqlite3-sys = { path = "../libsqlite3-sys-0.26.0" }
 Only in workdir/deno-1.36.1: target
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_core-0.200.0/Cargo.toml workdir/deno_core-0.200.0/Cargo.toml
 --- workdir-1/deno_core-0.200.0/Cargo.toml	2023-08-21 14:23:37.195216886 +0800
@@ -352,6 +353,23 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/worker.rs w
        deno_net::deno_net::init_ops_and_esm::<PermissionsContainer>(
          options.root_cert_store_provider.clone(),
          unstable,
+diff '--color=auto' -ru -x Cargo.lock workdir-1/libsqlite3-sys-0.26.0/build.rs workdir/libsqlite3-sys-0.26.0/build.rs
+--- workdir-1/libsqlite3-sys-0.26.0/build.rs	2023-08-22 17:48:40.874313753 +0800
++++ workdir/libsqlite3-sys-0.26.0/build.rs	2023-08-23 19:12:34.654028204 +0800
+@@ -201,6 +201,13 @@
+         // https://android.googlesource.com/platform/external/sqlite/+/2c8c9ae3b7e6f340a19a0001c2a889a211c9d8b2/dist/Android.mk
+         if super::android_target() {
+             cfg.flag("-DSQLITE_TEMP_STORE=3");
++
++            let target = env::var("TARGET").unwrap();
++            if target == "x86_64-linux-android" {
++                let ndk_home = env::var("ANDROID_NDK_HOME").unwrap();
++                println!("cargo:rustc-link-lib=static=clang_rt.builtins-x86_64-android");
++                println!("cargo:rustc-link-search={}/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang/14.0.7/lib/linux", ndk_home);
++            }
+         }
+ 
+         if cfg!(feature = "with-asan") {
 diff '--color=auto' -ru -x Cargo.lock workdir-1/libz-ng-sys-1.1.12/build_zng.rs workdir/libz-ng-sys-1.1.12/build_zng.rs
 --- workdir-1/libz-ng-sys-1.1.12/build_zng.rs	2023-08-21 15:28:56.175241480 +0800
 +++ workdir/libz-ng-sys-1.1.12/build_zng.rs	2023-08-21 18:15:47.439786414 +0800
@@ -378,3 +396,39 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/serde_v8-0.111.0/Cargo.toml work
  default-features = false
  
  [dev-dependencies.bencher]
+diff '--color=auto' -ru -x Cargo.lock workdir-1/v8-0.75.0/build.rs workdir/v8-0.75.0/build.rs
+--- workdir-1/v8-0.75.0/build.rs	2023-08-21 13:43:23.899828209 +0800
++++ workdir/v8-0.75.0/build.rs	2023-08-22 15:10:35.935818835 +0800
+@@ -145,7 +145,7 @@
+     let clang_base_path = clang_download();
+     gn_args.push(format!("clang_base_path={:?}", clang_base_path));
+ 
+-    if cfg!(target_os = "android") && cfg!(target_arch = "aarch64") {
++    if cfg!(target_os = "android") {
+       gn_args.push("treat_warnings_as_errors=false".to_string());
+     }
+   }
+@@ -180,9 +180,19 @@
+       maybe_install_sysroot("arm64");
+       maybe_install_sysroot("amd64");
+     };
++    if target_triple == "x86_64-linux-android" {
++      gn_args.push(r#"target_cpu="x64""#.to_string());
++      gn_args.push("use_sysroot=true".to_string());
++      maybe_install_sysroot("amd64");
++    }
+ 
+-    if target_triple == "aarch64-linux-android" {
+-      gn_args.push(r#"v8_target_cpu="arm64""#.to_string());
++    if target_triple.contains("android") {
++      if target_triple == "aarch64-linux-android" {
++        gn_args.push(r#"v8_target_cpu="arm64""#.to_string());
++      }
++      if target_triple == "x86_64-linux-android" {
++        gn_args.push(r#"v8_target_cpu="x64""#.to_string());
++      }
+       gn_args.push(r#"target_os="android""#.to_string());
+ 
+       gn_args.push("treat_warnings_as_errors=false".to_string());
+Only in workdir-1/v8-0.75.0: rust-toolchain.toml
+Only in workdir/v8-0.75.0: target
