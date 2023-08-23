@@ -36,7 +36,7 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/Cargo.toml workdir/d
 +deno_runtime = { path = "../deno_runtime-0.123.0" }
 +deno_core = { path = "../deno_core-0.200.0" }
 +serde_v8 = { path = "../serde_v8-0.111.0" }
-+libz-ng-sys = { path = "../libz-ng-sys-1.1.12" }
++#libz-ng-sys = { path = "../libz-ng-sys-1.1.12" }
 +deno_fs = { path = "../deno_fs-0.25.0" }
 +deno_node = { path = "../deno_node-0.52.0" }
 Only in workdir/deno-1.36.1: target
