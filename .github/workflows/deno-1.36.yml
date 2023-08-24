@@ -5,7 +5,7 @@ on:
     branches: [ "deno-1.36" ]
 
 jobs:
-  # build deno 1.36.0 for `aarch64-linux-android`
+  # build deno 1.36 for `aarch64-linux-android`
   build_android:
     runs-on: ubuntu-latest
 
@@ -64,14 +64,14 @@ jobs:
     - run: WORKDIR=$(pwd)/workdir CARGO_DIR=~/.cargo make deno
 
     # upload deno
-    - run: cd workdir/deno-1.36.1/target/aarch64-linux-android/release && zstd -19 deno
+    - run: cd workdir/deno-1.36.2/target/aarch64-linux-android/release && zstd -19 deno
 
     - uses: actions/upload-artifact@v3
       with:
-        name: deno-1.36.1_aarch64-linux-android
-        path: workdir/deno-1.36.1/target/aarch64-linux-android/release/deno.zst
+        name: deno-1.36.2_aarch64-linux-android
+        path: workdir/deno-1.36.2/target/aarch64-linux-android/release/deno.zst
 
-  # build deno 1.36.0 for `x86_64-linux-android`
+  # build deno 1.36 for `x86_64-linux-android`
   build_x86_64:
     runs-on: ubuntu-latest
 
@@ -122,11 +122,11 @@ jobs:
     - run: WORKDIR=$(pwd)/workdir CARGO_DIR=~/.cargo make deno_x86_64
 
     # upload deno
-    - run: cd workdir/deno-1.36.1/target/x86_64-linux-android/release && zstd -19 deno
+    - run: cd workdir/deno-1.36.2/target/x86_64-linux-android/release && zstd -19 deno
 
     - uses: actions/upload-artifact@v3
       with:
-        name: deno-1.36.1_x86_64-linux-android
-        path: workdir/deno-1.36.1/target/x86_64-linux-android/release/deno.zst
+        name: deno-1.36.2_x86_64-linux-android
+        path: workdir/deno-1.36.2/target/x86_64-linux-android/release/deno.zst
 
 # TODO

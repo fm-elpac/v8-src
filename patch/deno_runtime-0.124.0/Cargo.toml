@@ -12,7 +12,7 @@
 [package]
 edition = "2021"
 name = "deno_runtime"
-version = "0.123.0"
+version = "0.124.0"
 authors = ["the Deno authors"]
 description = "Provides the deno runtime library"
 readme = "README.md"
@@ -41,69 +41,69 @@ version = "=0.2.14"
 version = "=0.8.1"
 
 [dependencies.deno_ast]
-version = "0.27.0"
+version = "0.28.0"
 features = ["transpiling"]
 
 [dependencies.deno_broadcast_channel]
-version = "0.109.0"
+version = "0.110.0"
 
 [dependencies.deno_cache]
-version = "0.47.0"
+version = "0.48.0"
 
 [dependencies.deno_console]
-version = "0.115.0"
+version = "0.116.0"
 
 [dependencies.deno_core]
-version = "0.200.0"
+version = "0.202.0"
 
 [dependencies.deno_crypto]
-version = "0.129.0"
+version = "0.130.0"
 
 [dependencies.deno_fetch]
-version = "0.139.0"
+version = "0.140.0"
 
 [dependencies.deno_ffi]
-version = "0.102.0"
+version = "0.103.0"
 
 [dependencies.deno_fs]
-version = "0.25.0"
+version = "0.26.0"
 features = ["sync_fs"]
 
 [dependencies.deno_http]
-version = "0.110.0"
+version = "0.111.0"
 
 [dependencies.deno_io]
-version = "0.25.0"
+version = "0.26.0"
 
 [dependencies.deno_kv]
-version = "0.23.0"
+version = "0.24.0"
 
 [dependencies.deno_napi]
-version = "0.45.0"
+version = "0.46.0"
 
 [dependencies.deno_net]
-version = "0.107.0"
+version = "0.108.0"
 
 [dependencies.deno_node]
-version = "0.52.0"
+version = "0.53.0"
 
 [dependencies.deno_tls]
-version = "0.102.0"
+version = "0.103.0"
 
 [dependencies.deno_url]
-version = "0.115.0"
+version = "0.116.0"
 
 [dependencies.deno_web]
-version = "0.146.0"
+version = "0.147.0"
 
 [dependencies.deno_webidl]
-version = "0.115.0"
+version = "0.116.0"
 
 [dependencies.deno_websocket]
-version = "0.120.0"
+version = "0.121.0"
 
 [dependencies.deno_webstorage]
-version = "0.110.0"
+version = "0.111.0"
 
 [dependencies.dlopen]
 version = "0.1.8"
@@ -181,69 +181,69 @@ features = ["v4"]
 [dev-dependencies]
 
 [build-dependencies.deno_ast]
-version = "0.27.0"
+version = "0.28.0"
 features = ["transpiling"]
 
 [build-dependencies.deno_broadcast_channel]
-version = "0.109.0"
+version = "0.110.0"
 
 [build-dependencies.deno_cache]
-version = "0.47.0"
+version = "0.48.0"
 
 [build-dependencies.deno_console]
-version = "0.115.0"
+version = "0.116.0"
 
 [build-dependencies.deno_core]
-version = "0.200.0"
+version = "0.202.0"
 
 [build-dependencies.deno_crypto]
-version = "0.129.0"
+version = "0.130.0"
 
 [build-dependencies.deno_fetch]
-version = "0.139.0"
+version = "0.140.0"
 
 [build-dependencies.deno_ffi]
-version = "0.102.0"
+version = "0.103.0"
 
 [build-dependencies.deno_fs]
-version = "0.25.0"
+version = "0.26.0"
 features = ["sync_fs"]
 
 [build-dependencies.deno_http]
-version = "0.110.0"
+version = "0.111.0"
 
 [build-dependencies.deno_io]
-version = "0.25.0"
+version = "0.26.0"
 
 [build-dependencies.deno_kv]
-version = "0.23.0"
+version = "0.24.0"
 
 [build-dependencies.deno_napi]
-version = "0.45.0"
+version = "0.46.0"
 
 [build-dependencies.deno_net]
-version = "0.107.0"
+version = "0.108.0"
 
 [build-dependencies.deno_node]
-version = "0.52.0"
+version = "0.53.0"
 
 [build-dependencies.deno_tls]
-version = "0.102.0"
+version = "0.103.0"
 
 [build-dependencies.deno_url]
-version = "0.115.0"
+version = "0.116.0"
 
 [build-dependencies.deno_web]
-version = "0.146.0"
+version = "0.147.0"
 
 [build-dependencies.deno_webidl]
-version = "0.115.0"
+version = "0.116.0"
 
 [build-dependencies.deno_websocket]
-version = "0.120.0"
+version = "0.121.0"
 
 [build-dependencies.deno_webstorage]
-version = "0.110.0"
+version = "0.111.0"
 
 [features]
 __runtime_js_sources = ["dont_create_runtime_snapshot"]

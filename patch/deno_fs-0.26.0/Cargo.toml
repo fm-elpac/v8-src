@@ -11,10 +11,10 @@
 
 [package]
 edition = "2021"
-name = "serde_v8"
-version = "0.111.0"
+name = "deno_fs"
+version = "0.26.0"
 authors = ["the Deno authors"]
-description = "Rust to V8 serialization and deserialization"
+description = "Ops for interacting with the file system"
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/denoland/deno"
@@ -22,47 +22,44 @@ repository = "https://github.com/denoland/deno"
 [lib]
 path = "lib.rs"
 
-[[example]]
-name = "basic"
+[dependencies.async-trait]
+version = "0.1.51"
 
-[[bench]]
-name = "de"
-harness = false
+[dependencies.deno_core]
+version = "0.202.0"
 
-[[bench]]
-name = "ser"
-harness = false
+[dependencies.deno_io]
+version = "0.26.0"
 
-[dependencies.bytes]
-version = "1.4.0"
+[dependencies.filetime]
+version = "0.2.16"
 
-[dependencies.derive_more]
-version = "0.99.17"
+[dependencies.fs3]
+version = "0.5.0"
 
-[dependencies.num-bigint]
-version = "0.4"
-features = ["rand"]
+[dependencies.libc]
+version = "0.2.126"
+
+[dependencies.log]
+version = "=0.4.19"
+
+[dependencies.rand]
+version = "=0.8.5"
 
 [dependencies.serde]
 version = "1.0.149"
 features = ["derive"]
 
-[dependencies.serde_bytes]
-version = "0.11"
+[dependencies.tokio]
+version = "1.28.1"
+features = ["full"]
 
-[dependencies.smallvec]
-version = "1.8"
-features = ["union"]
+[features]
+sync_fs = []
 
-[dependencies.thiserror]
-version = "1.0.40"
+[target."cfg(unix)".dependencies.nix]
+version = "=0.24.2"
 
-[dependencies.v8]
-version = "0.74.3"
-default-features = false
-
-[dev-dependencies.bencher]
-version = "0.1"
-
-[dev-dependencies.serde_json]
-version = "1.0.85"
+[target."cfg(windows)".dependencies.winapi]
+version = "=0.3.9"
+features = ["winbase"]

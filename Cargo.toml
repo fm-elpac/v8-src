@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-deno = "=1.36.1"
+deno = "=1.36.2"
 
 # fix for cargo metadata
 v8 = "0.75.0"

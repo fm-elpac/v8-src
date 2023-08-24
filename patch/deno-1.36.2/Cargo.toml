@@ -12,7 +12,7 @@
 [package]
 edition = "2021"
 name = "deno"
-version = "1.36.1"
+version = "1.36.2"
 authors = ["the Deno authors"]
 exclude = ["tests/testdata/npm/registry/*"]
 default-run = "deno"
@@ -82,7 +82,7 @@ version = "=0.8.1"
 version = "=0.2.0"
 
 [dependencies.deno_ast]
-version = "0.27.0"
+version = "0.28.0"
 features = [
     "transpiling",
     "bundler",
@@ -100,43 +100,43 @@ features = [
 ]
 
 [dependencies.deno_cache_dir]
-version = "=0.5.0"
+version = "=0.5.2"
 
 [dependencies.deno_core]
-version = "0.200.0"
+version = "0.202.0"
 features = ["include_js_files_for_snapshotting"]
 
 [dependencies.deno_doc]
-version = "=0.64.0"
+version = "=0.65.0"
 
 [dependencies.deno_emit]
-version = "=0.25.0"
+version = "=0.26.0"
 
 [dependencies.deno_graph]
-version = "=0.50.0"
+version = "=0.52.0"
 
 [dependencies.deno_lint]
-version = "=0.49.0"
+version = "=0.50.1"
 features = ["docs"]
 
 [dependencies.deno_lockfile]
 version = "0.15.0"
 
 [dependencies.deno_npm]
-version = "0.11.0"
+version = "0.12.0"
 
 [dependencies.deno_runtime]
-version = "0.123.0"
+version = "0.124.0"
 features = [
     "dont_create_runtime_snapshot",
     "include_js_files_for_snapshotting",
 ]
 
 [dependencies.deno_semver]
-version = "0.3.0"
+version = "0.4.0"
 
 [dependencies.deno_task_shell]
-version = "=0.13.1"
+version = "=0.13.2"
 
 [dependencies.dissimilar]
 version = "=1.0.4"
@@ -148,7 +148,7 @@ version = "=0.17.4"
 version = "=0.15.3"
 
 [dependencies.dprint-plugin-typescript]
-version = "=0.86.1"
+version = "=0.86.2"
 
 [dependencies.encoding_rs]
 version = "=0.8.31"
@@ -157,7 +157,7 @@ version = "=0.8.31"
 version = "=0.9.0"
 
 [dependencies.eszip]
-version = "=0.49.0"
+version = "=0.50.0"
 
 [dependencies.fancy-regex]
 version = "=0.10.0"
@@ -211,10 +211,10 @@ features = ["serde"]
 version = "=0.93.2"
 
 [dependencies.monch]
-version = "=0.4.2"
+version = "=0.4.3"
 
 [dependencies.napi_sym]
-version = "0.45.0"
+version = "0.46.0"
 
 [dependencies.notify]
 version = "=5.0.0"
@@ -308,7 +308,7 @@ version = "=2.3.2"
 version = "=0.11.2"
 
 [dev-dependencies.deno_bench_util]
-version = "0.109.0"
+version = "0.110.0"
 
 [dev-dependencies.flaky_test]
 version = "=0.1.0"
@@ -329,11 +329,11 @@ version = "=0.22.0"
 version = "=0.22.0"
 
 [build-dependencies.deno_core]
-version = "0.200.0"
+version = "0.202.0"
 features = ["include_js_files_for_snapshotting"]
 
 [build-dependencies.deno_runtime]
-version = "0.123.0"
+version = "0.124.0"
 features = [
     "snapshot_from_snapshot",
     "include_js_files_for_snapshotting",

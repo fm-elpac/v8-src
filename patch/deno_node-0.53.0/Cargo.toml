@@ -12,7 +12,7 @@
 [package]
 edition = "2021"
 name = "deno_node"
-version = "0.52.0"
+version = "0.53.0"
 authors = ["the Deno authors"]
 description = "Node compatibility for Deno"
 readme = "README.md"
@@ -36,23 +36,23 @@ features = ["alloc"]
 version = "2.3.3"
 
 [dependencies.deno_core]
-version = "0.200.0"
+version = "0.202.0"
 
 [dependencies.deno_fetch]
-version = "0.139.0"
+version = "0.140.0"
 
 [dependencies.deno_fs]
-version = "0.25.0"
+version = "0.26.0"
 
 [dependencies.deno_media_type]
 version = "0.1.1"
 features = ["module_specifier"]
 
 [dependencies.deno_npm]
-version = "0.11.0"
+version = "0.12.0"
 
 [dependencies.deno_semver]
-version = "0.3.0"
+version = "0.4.0"
 
 [dependencies.digest]
 version = "0.10.5"
