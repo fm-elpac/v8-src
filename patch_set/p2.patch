@@ -25,8 +25,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/build.rs workdir/den
    .expect(
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/Cargo.toml workdir/deno-1.36.1/Cargo.toml
 --- workdir-1/deno-1.36.1/Cargo.toml	2023-08-24 13:06:31.534784965 +0800
-+++ workdir/deno-1.36.1/Cargo.toml	2023-08-24 13:06:43.573347125 +0800
-@@ -385,3 +385,11 @@
++++ workdir/deno-1.36.1/Cargo.toml	2023-08-24 14:12:18.818845133 +0800
+@@ -385,3 +385,12 @@
  
  [target."cfg(windows)".build-dependencies.winres]
  version = "=0.1.12"
@@ -38,6 +38,7 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/Cargo.toml workdir/d
 +serde_v8 = { path = "../serde_v8-0.111.0" }
 +deno_fs = { path = "../deno_fs-0.25.0" }
 +deno_node = { path = "../deno_node-0.52.0" }
++libsqlite3-sys = { path= "../libsqlite3-sys-0.26.0" }
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_core-0.200.0/Cargo.toml workdir/deno_core-0.200.0/Cargo.toml
 --- workdir-1/deno_core-0.200.0/Cargo.toml	2023-08-24 13:06:31.720793650 +0800
 +++ workdir/deno_core-0.200.0/Cargo.toml	2023-08-24 13:06:43.574347171 +0800
