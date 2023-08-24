@@ -160,6 +160,7 @@ jobs:
     # setup QEMU aarch64 for docker
     - run: docker run --rm --privileged aptman/qus -s -- -p aarch64 arm
 
+    - run: mkdir -p lib_v8/v0.75.0
     # download `librusty_v8.a` for `lib_v8`
     - uses: robinraju/release-downloader@v1
       with:
