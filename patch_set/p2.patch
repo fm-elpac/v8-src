@@ -1,6 +1,6 @@
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/build.rs workdir/deno-1.36.1/build.rs
---- workdir-1/deno-1.36.1/build.rs	2023-08-23 21:43:07.261382951 +0800
-+++ workdir/deno-1.36.1/build.rs	2023-08-23 21:43:43.117041596 +0800
+--- workdir-1/deno-1.36.1/build.rs	2023-08-24 12:39:25.994292675 +0800
++++ workdir/deno-1.36.1/build.rs	2023-08-24 12:39:50.132504409 +0800
 @@ -340,7 +340,6 @@
        deno_broadcast_channel::InMemoryBroadcastChannel::default(),
        false, // No --unstable.
@@ -24,8 +24,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/build.rs workdir/den
    .canonicalize()
    .expect(
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/Cargo.toml workdir/deno-1.36.1/Cargo.toml
---- workdir-1/deno-1.36.1/Cargo.toml	2023-08-23 21:43:07.227381378 +0800
-+++ workdir/deno-1.36.1/Cargo.toml	2023-08-23 21:44:25.908020152 +0800
+--- workdir-1/deno-1.36.1/Cargo.toml	2023-08-24 12:39:25.981292021 +0800
++++ workdir/deno-1.36.1/Cargo.toml	2023-08-24 12:39:50.134504509 +0800
 @@ -385,3 +385,11 @@
  
  [target."cfg(windows)".build-dependencies.winres]
@@ -39,8 +39,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno-1.36.1/Cargo.toml workdir/d
 +deno_fs = { path = "../deno_fs-0.25.0" }
 +deno_node = { path = "../deno_node-0.52.0" }
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_core-0.200.0/Cargo.toml workdir/deno_core-0.200.0/Cargo.toml
---- workdir-1/deno_core-0.200.0/Cargo.toml	2023-08-23 21:43:07.512394565 +0800
-+++ workdir/deno_core-0.200.0/Cargo.toml	2023-08-23 21:43:43.123041874 +0800
+--- workdir-1/deno_core-0.200.0/Cargo.toml	2023-08-24 12:39:26.205303285 +0800
++++ workdir/deno_core-0.200.0/Cargo.toml	2023-08-24 12:39:50.135504559 +0800
 @@ -91,7 +91,7 @@
  ]
  
@@ -51,8 +51,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_core-0.200.0/Cargo.toml wor
  
  [dev-dependencies.bencher]
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_core-0.200.0/runtime/jsruntime.rs workdir/deno_core-0.200.0/runtime/jsruntime.rs
---- workdir-1/deno_core-0.200.0/runtime/jsruntime.rs	2023-08-23 21:43:07.520394935 +0800
-+++ workdir/deno_core-0.200.0/runtime/jsruntime.rs	2023-08-23 21:43:43.128042105 +0800
+--- workdir-1/deno_core-0.200.0/runtime/jsruntime.rs	2023-08-24 12:39:26.209303487 +0800
++++ workdir/deno_core-0.200.0/runtime/jsruntime.rs	2023-08-24 12:39:50.137504660 +0800
 @@ -326,7 +326,7 @@
    #[repr(C, align(16))]
    struct IcuData([u8; 10541264]);
@@ -63,8 +63,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_core-0.200.0/runtime/jsrunt
    let base_flags = concat!(
      " --wasm-test-streaming",
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_fs-0.25.0/std_fs.rs workdir/deno_fs-0.25.0/std_fs.rs
---- workdir-1/deno_fs-0.25.0/std_fs.rs	2023-08-23 21:43:07.523395074 +0800
-+++ workdir/deno_fs-0.25.0/std_fs.rs	2023-08-23 21:43:43.135042429 +0800
+--- workdir-1/deno_fs-0.25.0/std_fs.rs	2023-08-24 12:39:26.212303638 +0800
++++ workdir/deno_fs-0.25.0/std_fs.rs	2023-08-24 12:39:50.139504760 +0800
 @@ -62,7 +62,7 @@
        let _ = umask(prev);
        prev
@@ -75,8 +75,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_fs-0.25.0/std_fs.rs workdir
        Ok(r.bits())
      }
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_node-0.52.0/ops/os.rs workdir/deno_node-0.52.0/ops/os.rs
---- workdir-1/deno_node-0.52.0/ops/os.rs	2023-08-23 21:43:07.526395213 +0800
-+++ workdir/deno_node-0.52.0/ops/os.rs	2023-08-23 21:43:43.140042660 +0800
+--- workdir-1/deno_node-0.52.0/ops/os.rs	2023-08-24 12:39:26.216303839 +0800
++++ workdir/deno_node-0.52.0/ops/os.rs	2023-08-24 12:39:50.140504810 +0800
 @@ -60,7 +60,7 @@
    use libc::id_t;
    use libc::PRIO_PROCESS;
@@ -87,8 +87,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_node-0.52.0/ops/os.rs workd
    type priority_t = i32;
    #[cfg(target_os = "linux")]
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_node-0.52.0/polyfills/internal_binding/uv.ts workdir/deno_node-0.52.0/polyfills/internal_binding/uv.ts
---- workdir-1/deno_node-0.52.0/polyfills/internal_binding/uv.ts	2023-08-23 21:43:07.540395860 +0800
-+++ workdir/deno_node-0.52.0/polyfills/internal_binding/uv.ts	2023-08-23 21:43:43.144042845 +0800
+--- workdir-1/deno_node-0.52.0/polyfills/internal_binding/uv.ts	2023-08-24 12:39:26.233304694 +0800
++++ workdir/deno_node-0.52.0/polyfills/internal_binding/uv.ts	2023-08-24 12:39:50.141504860 +0800
 @@ -494,6 +494,8 @@
      ? codeToErrorDarwin
      : osType === "linux"
@@ -108,8 +108,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_node-0.52.0/polyfills/inter
      ? errorToCodeFreebsd
      : osType === "openbsd"
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_node-0.52.0/polyfills/_util/os.ts workdir/deno_node-0.52.0/polyfills/_util/os.ts
---- workdir-1/deno_node-0.52.0/polyfills/_util/os.ts	2023-08-23 21:43:07.531395444 +0800
-+++ workdir/deno_node-0.52.0/polyfills/_util/os.ts	2023-08-23 21:43:43.146042937 +0800
+--- workdir-1/deno_node-0.52.0/polyfills/_util/os.ts	2023-08-24 12:39:26.222304140 +0800
++++ workdir/deno_node-0.52.0/polyfills/_util/os.ts	2023-08-24 12:39:50.142504910 +0800
 @@ -2,7 +2,7 @@
  
  const { ops } = globalThis.__bootstrap.core;
@@ -120,8 +120,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_node-0.52.0/polyfills/_util
  export const osType: OSType = ops.op_node_build_os();
  
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/build.rs workdir/deno_runtime-0.123.0/build.rs
---- workdir-1/deno_runtime-0.123.0/build.rs	2023-08-23 21:43:07.546396138 +0800
-+++ workdir/deno_runtime-0.123.0/build.rs	2023-08-23 21:43:43.149043076 +0800
+--- workdir-1/deno_runtime-0.123.0/build.rs	2023-08-24 12:39:26.239304995 +0800
++++ workdir/deno_runtime-0.123.0/build.rs	2023-08-24 12:39:50.143504960 +0800
 @@ -107,15 +107,6 @@
      }
    }
@@ -155,8 +155,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/build.rs wo
          None, false, // No --unstable.
          None,
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/Cargo.toml workdir/deno_runtime-0.123.0/Cargo.toml
---- workdir-1/deno_runtime-0.123.0/Cargo.toml	2023-08-23 21:43:07.545396092 +0800
-+++ workdir/deno_runtime-0.123.0/Cargo.toml	2023-08-23 21:43:43.169044001 +0800
+--- workdir-1/deno_runtime-0.123.0/Cargo.toml	2023-08-24 12:39:26.239304995 +0800
++++ workdir/deno_runtime-0.123.0/Cargo.toml	2023-08-24 12:39:50.164506013 +0800
 @@ -62,9 +62,6 @@
  [dependencies.deno_fetch]
  version = "0.139.0"
@@ -178,8 +178,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/Cargo.toml 
  version = "0.25.0"
  features = ["sync_fs"]
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/js/10_permissions.js workdir/deno_runtime-0.123.0/js/10_permissions.js
---- workdir-1/deno_runtime-0.123.0/js/10_permissions.js	2023-08-23 21:43:07.547396184 +0800
-+++ workdir/deno_runtime-0.123.0/js/10_permissions.js	2023-08-23 21:43:43.173044186 +0800
+--- workdir-1/deno_runtime-0.123.0/js/10_permissions.js	2023-08-24 12:39:26.240305046 +0800
++++ workdir/deno_runtime-0.123.0/js/10_permissions.js	2023-08-24 12:39:50.167506163 +0800
 @@ -33,7 +33,7 @@
   * @property {boolean} partial
   */
@@ -225,8 +225,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/js/10_permi
        if (ArrayIsArray(permissions[key])) {
          serializedPermissions[key] = ArrayPrototypeMap(
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/js/90_deno_ns.js workdir/deno_runtime-0.123.0/js/90_deno_ns.js
---- workdir-1/deno_runtime-0.123.0/js/90_deno_ns.js	2023-08-23 21:43:07.548396231 +0800
-+++ workdir/deno_runtime-0.123.0/js/90_deno_ns.js	2023-08-23 21:43:43.176044325 +0800
+--- workdir-1/deno_runtime-0.123.0/js/90_deno_ns.js	2023-08-24 12:39:26.241305096 +0800
++++ workdir/deno_runtime-0.123.0/js/90_deno_ns.js	2023-08-24 12:39:50.170506314 +0800
 @@ -5,7 +5,6 @@
  import * as timers from "ext:deno_web/02_timers.js";
  import * as httpClient from "ext:deno_fetch/22_http_client.js";
@@ -248,8 +248,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/js/90_deno_
    flockSync: fs.flockSync,
    funlock: fs.funlock,
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/lib.rs workdir/deno_runtime-0.123.0/lib.rs
---- workdir-1/deno_runtime-0.123.0/lib.rs	2023-08-23 21:43:07.548396231 +0800
-+++ workdir/deno_runtime-0.123.0/lib.rs	2023-08-23 21:43:43.177044371 +0800
+--- workdir-1/deno_runtime-0.123.0/lib.rs	2023-08-24 12:39:26.241305096 +0800
++++ workdir/deno_runtime-0.123.0/lib.rs	2023-08-24 12:39:50.172506414 +0800
 @@ -6,7 +6,6 @@
  pub use deno_core;
  pub use deno_crypto;
@@ -259,8 +259,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/lib.rs work
  pub use deno_http;
  pub use deno_io;
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/ops/os/mod.rs workdir/deno_runtime-0.123.0/ops/os/mod.rs
---- workdir-1/deno_runtime-0.123.0/ops/os/mod.rs	2023-08-23 21:43:07.549396277 +0800
-+++ workdir/deno_runtime-0.123.0/ops/os/mod.rs	2023-08-23 21:43:43.180044510 +0800
+--- workdir-1/deno_runtime-0.123.0/ops/os/mod.rs	2023-08-24 12:39:26.242305146 +0800
++++ workdir/deno_runtime-0.123.0/ops/os/mod.rs	2023-08-24 12:39:50.175506564 +0800
 @@ -305,7 +305,7 @@
    }
  }
@@ -271,8 +271,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/ops/os/mod.
    // Inspired by https://github.com/Arc-blroth/memory-stats/blob/5364d0d09143de2a470d33161b2330914228fde9/src/linux.rs
  
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/ops/os/sys_info.rs workdir/deno_runtime-0.123.0/ops/os/sys_info.rs
---- workdir-1/deno_runtime-0.123.0/ops/os/sys_info.rs	2023-08-23 21:43:07.549396277 +0800
-+++ workdir/deno_runtime-0.123.0/ops/os/sys_info.rs	2023-08-23 21:43:43.183044649 +0800
+--- workdir-1/deno_runtime-0.123.0/ops/os/sys_info.rs	2023-08-24 12:39:26.242305146 +0800
++++ workdir/deno_runtime-0.123.0/ops/os/sys_info.rs	2023-08-24 12:39:50.179506765 +0800
 @@ -6,7 +6,7 @@
  const DEFAULT_LOADAVG: LoadAvg = (0.0, 0.0, 0.0);
  
@@ -312,8 +312,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/ops/os/sys_
      let mut info = std::mem::MaybeUninit::uninit();
      // SAFETY: `info` is a valid pointer to a `libc::sysinfo` struct.
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/permissions/mod.rs workdir/deno_runtime-0.123.0/permissions/mod.rs
---- workdir-1/deno_runtime-0.123.0/permissions/mod.rs	2023-08-23 21:43:07.549396277 +0800
-+++ workdir/deno_runtime-0.123.0/permissions/mod.rs	2023-08-23 21:43:43.189044926 +0800
+--- workdir-1/deno_runtime-0.123.0/permissions/mod.rs	2023-08-24 12:39:26.243305196 +0800
++++ workdir/deno_runtime-0.123.0/permissions/mod.rs	2023-08-24 12:39:50.184507016 +0800
 @@ -1464,13 +1464,6 @@
    }
  }
@@ -329,8 +329,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/permissions
    #[inline(always)]
    fn check_read(&mut self, p: &Path, api_name: &str) -> Result<(), AnyError> {
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/web_worker.rs workdir/deno_runtime-0.123.0/web_worker.rs
---- workdir-1/deno_runtime-0.123.0/web_worker.rs	2023-08-23 21:43:07.550396323 +0800
-+++ workdir/deno_runtime-0.123.0/web_worker.rs	2023-08-23 21:43:43.209045851 +0800
+--- workdir-1/deno_runtime-0.123.0/web_worker.rs	2023-08-24 12:39:26.243305196 +0800
++++ workdir/deno_runtime-0.123.0/web_worker.rs	2023-08-24 12:39:50.187507166 +0800
 @@ -433,7 +433,6 @@
          options.broadcast_channel.clone(),
          unstable,
@@ -340,8 +340,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/web_worker.
          options.root_cert_store_provider.clone(),
          unstable,
 diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/worker.rs workdir/deno_runtime-0.123.0/worker.rs
---- workdir-1/deno_runtime-0.123.0/worker.rs	2023-08-23 21:43:07.550396323 +0800
-+++ workdir/deno_runtime-0.123.0/worker.rs	2023-08-23 21:43:43.213046036 +0800
+--- workdir-1/deno_runtime-0.123.0/worker.rs	2023-08-24 12:39:26.243305196 +0800
++++ workdir/deno_runtime-0.123.0/worker.rs	2023-08-24 12:39:50.189507266 +0800
 @@ -334,7 +334,6 @@
          options.broadcast_channel.clone(),
          unstable,
@@ -351,8 +351,8 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/deno_runtime-0.123.0/worker.rs w
          options.root_cert_store_provider.clone(),
          unstable,
 diff '--color=auto' -ru -x Cargo.lock workdir-1/serde_v8-0.111.0/Cargo.toml workdir/serde_v8-0.111.0/Cargo.toml
---- workdir-1/serde_v8-0.111.0/Cargo.toml	2023-08-23 21:43:07.552396416 +0800
-+++ workdir/serde_v8-0.111.0/Cargo.toml	2023-08-23 21:43:49.684345316 +0800
+--- workdir-1/serde_v8-0.111.0/Cargo.toml	2023-08-24 12:39:26.245305297 +0800
++++ workdir/serde_v8-0.111.0/Cargo.toml	2023-08-24 12:39:50.190507316 +0800
 @@ -58,7 +58,7 @@
  version = "1.0.40"
  
@@ -362,3 +362,37 @@ diff '--color=auto' -ru -x Cargo.lock workdir-1/serde_v8-0.111.0/Cargo.toml work
  default-features = false
  
  [dev-dependencies.bencher]
+diff '--color=auto' -ru -x Cargo.lock workdir-1/v8-0.75.0/build.rs workdir/v8-0.75.0/build.rs
+--- workdir-1/v8-0.75.0/build.rs	2023-08-24 12:39:26.297307912 +0800
++++ workdir/v8-0.75.0/build.rs	2023-08-24 12:39:50.213508469 +0800
+@@ -145,7 +145,7 @@
+     let clang_base_path = clang_download();
+     gn_args.push(format!("clang_base_path={:?}", clang_base_path));
+ 
+-    if cfg!(target_os = "android") && cfg!(target_arch = "aarch64") {
++    if cfg!(target_os = "android") {
+       gn_args.push("treat_warnings_as_errors=false".to_string());
+     }
+   }
+@@ -180,9 +180,19 @@
+       maybe_install_sysroot("arm64");
+       maybe_install_sysroot("amd64");
+     };
++    if target_triple == "x86_64-linux-android" {
++      gn_args.push(r#"target_cpu="x64""#.to_string());
++      gn_args.push("use_sysroot=true".to_string());
++      maybe_install_sysroot("amd64");
++    }
+ 
+-    if target_triple == "aarch64-linux-android" {
+-      gn_args.push(r#"v8_target_cpu="arm64""#.to_string());
++    if target_triple.contains("android") {
++      if target_triple == "aarch64-linux-android" {
++        gn_args.push(r#"v8_target_cpu="arm64""#.to_string());
++      }
++      if target_triple == "x86_64-linux-android" {
++        gn_args.push(r#"v8_target_cpu="x64""#.to_string());
++      }
+       gn_args.push(r#"target_os="android""#.to_string());
+ 
+       gn_args.push("treat_warnings_as_errors=false".to_string());

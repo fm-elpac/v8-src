@@ -1,4 +1,3 @@
-
 ```
 ANDROID_NDK=/usr/local/lib/android/sdk/ndk/25.2.9519653
 ANDROID_NDK_LATEST_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653

@@ -35,6 +35,15 @@ cmd.push("export RUST_BACKTRACE=1");
 // run build.rs
 cmd.push(exe_file);
 
+// docker image name
+function get_img(target) {
+  if ("aarch64-linux-android" == target) {
+    return "termux/termux-docker:aarch64";
+  } else if ("x86_64-linux-android" == target) {
+    return "termux/termux-docker:x86_64";
+  }
+}
+
 let workdir = env["WORKDIR"];
 let cargo_dir = env["CARGO_DIR"];
 // docker run
@@ -48,7 +57,7 @@ let args = [
   `type=bind,src=${cargo_dir},target=${cargo_dir}`,
   "--entrypoint",
   "/entrypoint_root.sh",
-  "termux/termux-docker:aarch64",
+  get_img(env["TARGET"]),
   "bash",
   "-c",
   cmd.join(" && "),
