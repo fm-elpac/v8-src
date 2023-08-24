@@ -27,8 +27,12 @@ for (let i of env_list) {
   cmd.push(`export ${i}=${env[i]}`);
 }
 
-// fix `libz.so`
-cmd.push("export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib/");
+let is_android = env["TARGET"].includes("android");
+
+if (is_android) {
+  // fix `libz.so`
+  cmd.push("export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib/");
+}
 // DEBUG
 cmd.push("export RUST_BACKTRACE=1");
 
@@ -41,6 +45,8 @@ function get_img(target) {
     return "termux/termux-docker:aarch64";
   } else if ("x86_64-linux-android" == target) {
     return "termux/termux-docker:x86_64";
+  } else if ("aarch64-unknown-linux-gnu" == target) {
+    return "arm64v8/debian:bookworm-slim";
   }
 }
 
@@ -55,13 +61,21 @@ let args = [
   `type=bind,src=${workdir},target=${workdir}`,
   "--mount",
   `type=bind,src=${cargo_dir},target=${cargo_dir}`,
-  "--entrypoint",
-  "/entrypoint_root.sh",
+];
+
+if (is_android) {
+  args = args.concat([
+    "--entrypoint",
+    "/entrypoint_root.sh",
+  ]);
+}
+
+args = args.concat([
   get_img(env["TARGET"]),
   "bash",
   "-c",
   cmd.join(" && "),
-];
+]);
 
 // DEBUG
 console.log("RUN docker " + JSON.stringify(args));
