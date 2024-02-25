@@ -19,7 +19,7 @@ jobs:
 
     - run: cd deno && git apply ../2.patch
 
-    - uses: docker/setup-qemu-action@v2
+    - uses: docker/setup-qemu-action@v3
       with:
         platforms: arm64
     # setup QEMU aarch64 for termux-docker
@@ -30,8 +30,8 @@ jobs:
       with:
         repository: "fm-elpac/v8-src"
         tag: "rusty_v8-0.83.2"
-        fileName: "v0.83.2-librusty_v8_release_aarch64-linux-android.a.zst"
-    - run: mkdir -p lib_v8/v0.83.2 && cp v0.83.2-librusty_v8_release_aarch64-linux-android.a.zst lib_v8/v0.83.2/librusty_v8_release_aarch64-linux-android.a.zst
+        fileName: "librusty_v8_release_aarch64-linux-android.a.zst"
+    - run: mkdir -p lib_v8/v0.83.2 && cp librusty_v8_release_aarch64-linux-android.a.zst lib_v8/v0.83.2/librusty_v8_release_aarch64-linux-android.a.zst
     - run: cd lib_v8/v0.83.2 && zstd -d librusty_v8_release_aarch64-linux-android.a.zst
 
     - uses: robinraju/release-downloader@v1
@@ -61,7 +61,7 @@ jobs:
     # upload deno
     - run: cd deno/target/aarch64-linux-android/release && zstd -19 deno
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: deno-1.41.0_aarch64-linux-android
         path: deno/target/aarch64-linux-android/release/deno.zst
