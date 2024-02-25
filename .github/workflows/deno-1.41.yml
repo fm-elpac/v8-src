@@ -19,6 +19,12 @@ jobs:
 
     - run: cd deno && git apply ../2.patch
 
+    # install dep
+    - run: |
+        sudo apt-get update && \
+        sudo apt-get -y install \
+        protobuf-compiler
+
     - uses: docker/setup-qemu-action@v3
       with:
         platforms: arm64
