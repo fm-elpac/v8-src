@@ -1,0 +1,1884 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 7e8988c..07237f5 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -5,32 +5,26 @@ resolver = "2"
+ members = [
+   "bench_util",
+   "cli",
+-  "cli/napi/sym",
+   "ext/broadcast_channel",
+   "ext/cache",
+-  "ext/canvas",
+   "ext/console",
+   "ext/cron",
+   "ext/crypto",
+   "ext/fetch",
+-  "ext/ffi",
+   "ext/fs",
+   "ext/http",
+   "ext/io",
+   "ext/kv",
+-  "ext/napi",
+   "ext/net",
+   "ext/node",
+   "ext/url",
+   "ext/web",
+-  "ext/webgpu",
+   "ext/webidl",
+   "ext/websocket",
+   "ext/webstorage",
+   "runtime",
+   "tests",
+   "tests/ffi",
+-  "tests/napi",
+   "tests/util/server",
+ ]
+ exclude = ["tests/util/std/hash/_wasm"]
+@@ -50,7 +44,6 @@ deno_lockfile = "0.19.0"
+ deno_media_type = { version = "0.1.1", features = ["module_specifier"] }
+ deno_runtime = { version = "0.147.0", path = "./runtime" }
+ deno_terminal = "0.1.1"
+-napi_sym = { version = "0.69.0", path = "./cli/napi/sym" }
+ test_util = { package = "test_server", path = "./tests/util/server" }
+ 
+ denokv_proto = "0.5.0"
+@@ -61,23 +54,19 @@ denokv_sqlite = { default-features = false, version = "0.5.0" }
+ # exts
+ deno_broadcast_channel = { version = "0.133.0", path = "./ext/broadcast_channel" }
+ deno_cache = { version = "0.71.0", path = "./ext/cache" }
+-deno_canvas = { version = "0.8.0", path = "./ext/canvas" }
+ deno_console = { version = "0.139.0", path = "./ext/console" }
+ deno_cron = { version = "0.19.0", path = "./ext/cron" }
+ deno_crypto = { version = "0.153.0", path = "./ext/crypto" }
+ deno_fetch = { version = "0.163.0", path = "./ext/fetch" }
+-deno_ffi = { version = "0.126.0", path = "./ext/ffi" }
+ deno_fs = { version = "0.49.0", path = "./ext/fs" }
+ deno_http = { version = "0.136.0", path = "./ext/http" }
+ deno_io = { version = "0.49.0", path = "./ext/io" }
+ deno_kv = { version = "0.47.0", path = "./ext/kv" }
+-deno_napi = { version = "0.69.0", path = "./ext/napi" }
+ deno_net = { version = "0.131.0", path = "./ext/net" }
+ deno_node = { version = "0.76.0", path = "./ext/node" }
+ deno_tls = { version = "0.126.0", path = "./ext/tls" }
+ deno_url = { version = "0.139.0", path = "./ext/url" }
+ deno_web = { version = "0.170.0", path = "./ext/web" }
+-deno_webgpu = { version = "0.106.0", path = "./ext/webgpu" }
+ deno_webidl = { version = "0.139.0", path = "./ext/webidl" }
+ deno_websocket = { version = "0.144.0", path = "./ext/websocket" }
+ deno_webstorage = { version = "0.134.0", path = "./ext/webstorage" }
+@@ -202,7 +191,7 @@ winres = "=0.1.12"
+ [profile.release]
+ codegen-units = 1
+ incremental = true
+-lto = true
++#lto = true
+ opt-level = 'z' # Optimize for size
+ 
+ # Build release with debug symbols: cargo build --profile=release-with-debug
+@@ -249,8 +238,6 @@ opt-level = 3
+ opt-level = 3
+ [profile.bench.package.deno_fetch]
+ opt-level = 3
+-[profile.bench.package.deno_ffi]
+-opt-level = 3
+ [profile.bench.package.deno_tls]
+ opt-level = 3
+ [profile.bench.package.deno_websocket]
+@@ -323,16 +310,10 @@ opt-level = 3
+ opt-level = 3
+ [profile.release.package.deno_fetch]
+ opt-level = 3
+-[profile.release.package.deno_ffi]
+-opt-level = 3
+ [profile.release.package.deno_tls]
+ opt-level = 3
+ [profile.release.package.deno_websocket]
+ opt-level = 3
+-[profile.release.package.deno_napi]
+-opt-level = 3
+-[profile.release.package.test_napi]
+-opt-level = 3
+ [profile.release.package.num-bigint-dig]
+ opt-level = 3
+ [profile.release.package.v8]
+diff --git a/cli/Cargo.toml b/cli/Cargo.toml
+index ae42d3c..b6d8ea3 100644
+--- a/cli/Cargo.toml
++++ b/cli/Cargo.toml
+@@ -77,7 +77,6 @@ deno_semver = "=0.5.4"
+ deno_task_shell = "=0.14.3"
+ deno_terminal.workspace = true
+ eszip = "=0.64.1"
+-napi_sym.workspace = true
+ 
+ async-trait.workspace = true
+ base32.workspace = true
+diff --git a/cli/args/flags.rs b/cli/args/flags.rs
+index 44bb0dd..2ebd11b 100644
+--- a/cli/args/flags.rs
++++ b/cli/args/flags.rs
+@@ -432,8 +432,6 @@ pub struct Flags {
+   pub deny_hrtime: bool,
+   pub allow_net: Option<Vec<String>>,
+   pub deny_net: Option<Vec<String>>,
+-  pub allow_ffi: Option<Vec<PathBuf>>,
+-  pub deny_ffi: Option<Vec<PathBuf>>,
+   pub allow_read: Option<Vec<PathBuf>>,
+   pub deny_read: Option<Vec<PathBuf>>,
+   pub allow_run: Option<Vec<String>>,
+@@ -643,28 +641,6 @@ impl Flags {
+       _ => {}
+     }
+ 
+-    match &self.allow_ffi {
+-      Some(ffi_allowlist) if ffi_allowlist.is_empty() => {
+-        args.push("--allow-ffi".to_string());
+-      }
+-      Some(ffi_allowlist) => {
+-        let s = format!("--allow-ffi={}", join_paths(ffi_allowlist, ","));
+-        args.push(s);
+-      }
+-      _ => {}
+-    }
+-
+-    match &self.deny_ffi {
+-      Some(ffi_denylist) if ffi_denylist.is_empty() => {
+-        args.push("--deny-ffi".to_string());
+-      }
+-      Some(ffi_denylist) => {
+-        let s = format!("--deny-ffi={}", join_paths(ffi_denylist, ","));
+-        args.push(s);
+-      }
+-      _ => {}
+-    }
+-
+     if self.allow_hrtime {
+       args.push("--allow-hrtime".to_string());
+     }
+@@ -771,8 +747,6 @@ impl Flags {
+       || self.deny_hrtime
+       || self.allow_env.is_some()
+       || self.deny_env.is_some()
+-      || self.allow_ffi.is_some()
+-      || self.deny_ffi.is_some()
+       || self.allow_net.is_some()
+       || self.deny_net.is_some()
+       || self.allow_read.is_some()
+@@ -792,8 +766,6 @@ impl Flags {
+         || arg == "--deny-hrtime"
+         || arg.starts_with("--allow-env")
+         || arg.starts_with("--deny-env")
+-        || arg.starts_with("--allow-ffi")
+-        || arg.starts_with("--deny-ffi")
+         || arg.starts_with("--allow-net")
+         || arg.starts_with("--deny-net")
+         || arg.starts_with("--allow-read")
+@@ -972,7 +944,6 @@ fn handle_repl_flags(flags: &mut Flags, repl_flags: ReplFlags) {
+     flags.allow_read = Some(vec![]);
+     flags.allow_sys = Some(vec![]);
+     flags.allow_write = Some(vec![]);
+-    flags.allow_ffi = Some(vec![]);
+     flags.allow_hrtime = true;
+   }
+   flags.subcommand = DenoSubcommand::Repl(repl_flags);
+@@ -2539,26 +2510,6 @@ static DENY_RUN_HELP: &str = concat!(
+   "  --deny-run=\"whoami,ps\""
+ );
+ 
+-static ALLOW_FFI_HELP: &str = concat!(
+-  "(Unstable) Allow loading dynamic libraries. Optionally specify allowed directories or files.\n",
+-  "Docs: https://deno.land/manual@v",
+-  env!("CARGO_PKG_VERSION"),
+-  "/basics/permissions\n",
+-  "Examples:\n",
+-  "  --allow-ffi\n",
+-  "  --allow-ffi=\"./libfoo.so\""
+-);
+-
+-static DENY_FFI_HELP: &str = concat!(
+-  "(Unstable) Deny loading dynamic libraries. Optionally specify denied directories or files.\n",
+-  "Docs: https://deno.land/manual@v",
+-  env!("CARGO_PKG_VERSION"),
+-  "/basics/permissions\n",
+-  "Examples:\n",
+-  "  --deny-ffi\n",
+-  "  --deny-ffi=\"./libfoo.so\""
+-);
+-
+ static ALLOW_HRTIME_HELP: &str = concat!(
+   "Allow high-resolution time measurement. Note: this can enable timing attacks and fingerprinting.\n",
+   "Docs: https://deno.land/manual@v",
+@@ -2729,30 +2680,6 @@ fn permission_args(app: Command) -> Command {
+         .value_name("PROGRAM_NAME")
+         .help(DENY_RUN_HELP),
+     )
+-    .arg(
+-      Arg::new("allow-ffi")
+-        .long("allow-ffi")
+-        .num_args(0..)
+-        .use_value_delimiter(true)
+-        .require_equals(true)
+-        .value_name("PATH")
+-        .help(ALLOW_FFI_HELP)
+-        // todo(dsherret): remove value_parser!(PathBuf) and instead parse as string
+-        .value_parser(value_parser!(PathBuf))
+-        .value_hint(ValueHint::AnyPath),
+-    )
+-    .arg(
+-      Arg::new("deny-ffi")
+-        .long("deny-ffi")
+-        .num_args(0..)
+-        .use_value_delimiter(true)
+-        .require_equals(true)
+-        .value_name("PATH")
+-        .help(DENY_FFI_HELP)
+-        // todo(dsherret): remove value_parser!(PathBuf) and instead parse as string
+-        .value_parser(value_parser!(PathBuf))
+-        .value_hint(ValueHint::AnyPath),
+-    )
+     .arg(
+       Arg::new("allow-hrtime")
+         .long("allow-hrtime")
+@@ -3436,7 +3363,6 @@ fn eval_parse(flags: &mut Flags, matches: &mut ArgMatches) {
+   flags.allow_read = Some(vec![]);
+   flags.allow_sys = Some(vec![]);
+   flags.allow_write = Some(vec![]);
+-  flags.allow_ffi = Some(vec![]);
+   flags.allow_hrtime = true;
+ 
+   ext_arg_parse(flags, matches);
+@@ -3915,16 +3841,6 @@ fn permission_args_parse(flags: &mut Flags, matches: &mut ArgMatches) {
+     debug!("sys info denylist: {:#?}", &flags.deny_sys);
+   }
+ 
+-  if let Some(ffi_wl) = matches.remove_many::<PathBuf>("allow-ffi") {
+-    flags.allow_ffi = Some(ffi_wl.collect());
+-    debug!("ffi allowlist: {:#?}", &flags.allow_ffi);
+-  }
+-
+-  if let Some(ffi_wl) = matches.remove_many::<PathBuf>("deny-ffi") {
+-    flags.deny_ffi = Some(ffi_wl.collect());
+-    debug!("ffi denylist: {:#?}", &flags.deny_ffi);
+-  }
+-
+   if matches.get_flag("allow-hrtime") {
+     flags.allow_hrtime = true;
+   }
+@@ -3941,7 +3857,6 @@ fn permission_args_parse(flags: &mut Flags, matches: &mut ArgMatches) {
+     flags.allow_run = Some(vec![]);
+     flags.allow_write = Some(vec![]);
+     flags.allow_sys = Some(vec![]);
+-    flags.allow_ffi = Some(vec![]);
+     flags.allow_hrtime = true;
+   }
+ 
+@@ -4566,7 +4481,6 @@ mod tests {
+         allow_read: Some(vec![]),
+         allow_sys: Some(vec![]),
+         allow_write: Some(vec![]),
+-        allow_ffi: Some(vec![]),
+         allow_hrtime: true,
+         ..Flags::default()
+       }
+@@ -5374,7 +5288,6 @@ mod tests {
+         allow_read: Some(vec![]),
+         allow_sys: Some(vec![]),
+         allow_write: Some(vec![]),
+-        allow_ffi: Some(vec![]),
+         allow_hrtime: true,
+         ..Flags::default()
+       }
+@@ -5397,7 +5310,6 @@ mod tests {
+         allow_read: Some(vec![]),
+         allow_sys: Some(vec![]),
+         allow_write: Some(vec![]),
+-        allow_ffi: Some(vec![]),
+         allow_hrtime: true,
+         ..Flags::default()
+       }
+@@ -5421,7 +5333,6 @@ mod tests {
+         allow_read: Some(vec![]),
+         allow_sys: Some(vec![]),
+         allow_write: Some(vec![]),
+-        allow_ffi: Some(vec![]),
+         allow_hrtime: true,
+         ext: Some("ts".to_string()),
+         ..Flags::default()
+@@ -5459,7 +5370,6 @@ mod tests {
+         allow_read: Some(vec![]),
+         allow_sys: Some(vec![]),
+         allow_write: Some(vec![]),
+-        allow_ffi: Some(vec![]),
+         allow_hrtime: true,
+         env_file: Some(".example.env".to_owned()),
+         ..Flags::default()
+@@ -5490,7 +5400,6 @@ mod tests {
+         allow_read: Some(vec![]),
+         allow_sys: Some(vec![]),
+         allow_write: Some(vec![]),
+-        allow_ffi: Some(vec![]),
+         allow_hrtime: true,
+         ..Flags::default()
+       }
+@@ -5520,8 +5429,6 @@ mod tests {
+         deny_sys: None,
+         allow_write: Some(vec![]),
+         deny_write: None,
+-        allow_ffi: Some(vec![]),
+-        deny_ffi: None,
+         allow_hrtime: true,
+         ..Flags::default()
+       }
+@@ -5573,7 +5480,6 @@ mod tests {
+         allow_read: Some(vec![]),
+         allow_sys: Some(vec![]),
+         allow_write: Some(vec![]),
+-        allow_ffi: Some(vec![]),
+         allow_hrtime: true,
+         env_file: Some(".example.env".to_owned()),
+         unsafely_ignore_certificate_errors: Some(vec![]),
+diff --git a/cli/args/mod.rs b/cli/args/mod.rs
+index 2a779e0..d0ccdbb 100644
+--- a/cli/args/mod.rs
++++ b/cli/args/mod.rs
+@@ -1485,8 +1485,6 @@ impl CliOptions {
+       deny_hrtime: self.flags.deny_hrtime,
+       allow_net: self.flags.allow_net.clone(),
+       deny_net: self.flags.deny_net.clone(),
+-      allow_ffi: self.flags.allow_ffi.clone(),
+-      deny_ffi: self.flags.deny_ffi.clone(),
+       allow_read: self.flags.allow_read.clone(),
+       deny_read: self.flags.deny_read.clone(),
+       allow_run: self.flags.allow_run.clone(),
+diff --git a/cli/build.rs b/cli/build.rs
+index 1f94114..c079182 100644
+--- a/cli/build.rs
++++ b/cli/build.rs
+@@ -149,10 +149,8 @@ mod ts {
+     op_crate_libs.insert("deno.url", deno_url::get_declaration());
+     op_crate_libs.insert("deno.web", deno_web::get_declaration());
+     op_crate_libs.insert("deno.fetch", deno_fetch::get_declaration());
+-    op_crate_libs.insert("deno.webgpu", deno_webgpu_get_declaration());
+     op_crate_libs.insert("deno.websocket", deno_websocket::get_declaration());
+     op_crate_libs.insert("deno.webstorage", deno_webstorage::get_declaration());
+-    op_crate_libs.insert("deno.canvas", deno_canvas::get_declaration());
+     op_crate_libs.insert("deno.crypto", deno_crypto::get_declaration());
+     op_crate_libs.insert(
+       "deno.broadcast_channel",
+@@ -392,12 +390,6 @@ fn main() {
+     "android" => "generated_symbol_exports_list_linux.def".to_string(),
+     os => format!("generated_symbol_exports_list_{}.def", os),
+   };
+-  let symbols_path = std::path::Path::new("napi")
+-    .join(symbols_file_name)
+-    .canonicalize()
+-    .expect(
+-        "Missing symbols list! Generate using tools/napi/generate_symbols_lists.js",
+-    );
+ 
+   #[cfg(target_os = "windows")]
+   println!(
+@@ -423,19 +415,9 @@ fn main() {
+       println!("cargo:warning=Compiling with all symbols exported, this will result in a larger binary. Please use glibc 2.35 or later for an optimised build.");
+       println!("cargo:rustc-link-arg-bin=deno=-rdynamic");
+     } else {
+-      println!(
+-        "cargo:rustc-link-arg-bin=deno=-Wl,--export-dynamic-symbol-list={}",
+-        symbols_path.display()
+-      );
+     }
+   }
+ 
+-  #[cfg(target_os = "android")]
+-  println!(
+-    "cargo:rustc-link-arg-bin=deno=-Wl,--export-dynamic-symbol-list={}",
+-    symbols_path.display()
+-  );
+-
+   // To debug snapshot issues uncomment:
+   // op_fetch_asset::trace_serializer();
+ 
+@@ -482,11 +464,3 @@ fn main() {
+     res.compile().unwrap();
+   }
+ }
+-
+-fn deno_webgpu_get_declaration() -> PathBuf {
+-  let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+-  manifest_dir
+-    .join("tsc")
+-    .join("dts")
+-    .join("lib.deno_webgpu.d.ts")
+-}
+diff --git a/cli/main.rs b/cli/main.rs
+index 5e446ef..a0a9110 100644
+--- a/cli/main.rs
++++ b/cli/main.rs
+@@ -14,7 +14,6 @@ mod http_util;
+ mod js;
+ mod lsp;
+ mod module_loader;
+-mod napi;
+ mod node;
+ mod npm;
+ mod ops;
+diff --git a/cli/tsc/dts/lib.deno.ns.d.ts b/cli/tsc/dts/lib.deno.ns.d.ts
+index 787c1a2..ff617d8 100644
+--- a/cli/tsc/dts/lib.deno.ns.d.ts
++++ b/cli/tsc/dts/lib.deno.ns.d.ts
+@@ -635,15 +635,6 @@ declare namespace Deno {
+      */
+     net?: "inherit" | boolean | string[];
+ 
+-    /** Specifies if the `ffi` permission should be requested or revoked.
+-     * If set to `"inherit"`, the current `ffi` permission will be inherited.
+-     * If set to `true`, the global `ffi` permission will be requested.
+-     * If set to `false`, the global `ffi` permission will be revoked.
+-     *
+-     * @default {false}
+-     */
+-    ffi?: "inherit" | boolean | Array<string | URL>;
+-
+     /** Specifies if the `read` permission should be requested or revoked.
+      * If set to `"inherit"`, the current `read` permission will be inherited.
+      * If set to `true`, the global `read` permission will be requested.
+@@ -4851,7 +4842,6 @@ declare namespace Deno {
+     | "net"
+     | "env"
+     | "sys"
+-    | "ffi"
+     | "hrtime";
+ 
+   /** The current status of the permission:
+@@ -4965,19 +4955,6 @@ declare namespace Deno {
+       | "cpus";
+   }
+ 
+-  /** The permission descriptor for the `allow-ffi` and `deny-ffi` permissions, which controls
+-   * access to loading _foreign_ code and interfacing with it via the
+-   * [Foreign Function Interface API](https://deno.land/manual/runtime/ffi_api)
+-   * available in Deno.  The option `path` allows scoping the permission to a
+-   * specific path on the host.
+-   *
+-   * @category Permissions */
+-  export interface FfiPermissionDescriptor {
+-    name: "ffi";
+-    /** Optional path on the local host to scope the permission to. */
+-    path?: string | URL;
+-  }
+-
+   /** The permission descriptor for the `allow-hrtime` and `deny-hrtime` permissions, which
+    * controls if the runtime code has access to high resolution time. High
+    * resolution time is considered sensitive information, because it can be used
+@@ -5004,7 +4981,6 @@ declare namespace Deno {
+     | NetPermissionDescriptor
+     | EnvPermissionDescriptor
+     | SysPermissionDescriptor
+-    | FfiPermissionDescriptor
+     | HrtimePermissionDescriptor;
+ 
+   /** The interface which defines what event types are supported by
+diff --git a/cli/tsc/dts/lib.deno.shared_globals.d.ts b/cli/tsc/dts/lib.deno.shared_globals.d.ts
+index 86bf823..f4d19c8 100644
+--- a/cli/tsc/dts/lib.deno.shared_globals.d.ts
++++ b/cli/tsc/dts/lib.deno.shared_globals.d.ts
+@@ -8,8 +8,6 @@
+ /// <reference lib="deno.console" />
+ /// <reference lib="deno.url" />
+ /// <reference lib="deno.web" />
+-/// <reference lib="deno.webgpu" />
+-/// <reference lib="deno.canvas" />
+ /// <reference lib="deno.fetch" />
+ /// <reference lib="deno.websocket" />
+ /// <reference lib="deno.crypto" />
+diff --git a/cli/tsc/dts/lib.deno.unstable.d.ts b/cli/tsc/dts/lib.deno.unstable.d.ts
+index 4285b65..7884d3b 100644
+--- a/cli/tsc/dts/lib.deno.unstable.d.ts
++++ b/cli/tsc/dts/lib.deno.unstable.d.ts
+@@ -3,7 +3,6 @@
+ /// <reference no-default-lib="true" />
+ /// <reference lib="deno.ns" />
+ /// <reference lib="deno.broadcast_channel" />
+-/// <reference lib="deno.webgpu" />
+ /// <reference lib="esnext" />
+ /// <reference lib="es2022.intl" />
+ 
+@@ -715,82 +714,6 @@ declare namespace Deno {
+     | []
+   >;
+ 
+-  /** **UNSTABLE**: New API, yet to be vetted.
+-   *
+-   * Opens an external dynamic library and registers symbols, making foreign
+-   * functions available to be called.
+-   *
+-   * Requires `allow-ffi` permission. Loading foreign dynamic libraries can in
+-   * theory bypass all of the sandbox permissions. While it is a separate
+-   * permission users should acknowledge in practice that is effectively the
+-   * same as running with the `allow-all` permission.
+-   *
+-   * @example Given a C library which exports a foreign function named `add()`
+-   *
+-   * ```ts
+-   * // Determine library extension based on
+-   * // your OS.
+-   * let libSuffix = "";
+-   * switch (Deno.build.os) {
+-   *   case "windows":
+-   *     libSuffix = "dll";
+-   *     break;
+-   *   case "darwin":
+-   *     libSuffix = "dylib";
+-   *     break;
+-   *   default:
+-   *     libSuffix = "so";
+-   *     break;
+-   * }
+-   *
+-   * const libName = `./libadd.${libSuffix}`;
+-   * // Open library and define exported symbols
+-   * const dylib = Deno.dlopen(
+-   *   libName,
+-   *   {
+-   *     "add": { parameters: ["isize", "isize"], result: "isize" },
+-   *   } as const,
+-   * );
+-   *
+-   * // Call the symbol `add`
+-   * const result = dylib.symbols.add(35, 34); // 69
+-   *
+-   * console.log(`Result from external addition of 35 and 34: ${result}`);
+-   * ```
+-   *
+-   * @tags allow-ffi
+-   * @category FFI
+-   */
+-  export function dlopen<S extends ForeignLibraryInterface>(
+-    filename: string | URL,
+-    symbols: Const<S>,
+-  ): DynamicLibrary<S>;
+-
+-  /** **UNSTABLE**: New API, yet to be vetted.
+-   *
+-   *  Creates a presentable WebGPU surface from given window and
+-   *  display handles.
+-   *
+-   *  The parameters correspond to the table below:
+-   *
+-   *  | system            | winHandle     | displayHandle   |
+-   *  | ----------------- | ------------- | --------------- |
+-   *  | "cocoa" (macOS)   | `NSView*`     | -               |
+-   *  | "win32" (Windows) | `HWND`        | `HINSTANCE`     |
+-   *  | "x11" (Linux)     | Xlib `Window` | Xlib `Display*` |
+-   *
+-   * @category WebGPU
+-   */
+-  export class UnsafeWindowSurface {
+-    constructor(
+-      system: "cocoa" | "win32" | "x11",
+-      windowHandle: Deno.PointerValue<unknown>,
+-      displayHandle: Deno.PointerValue<unknown>,
+-    );
+-    getContext(context: "webgpu"): GPUCanvasContext;
+-    present(): void;
+-  }
+-
+   /** **UNSTABLE**: New API, yet to be vetted.
+    *
+    * These are unstable options which can be used with {@linkcode Deno.run}.
+diff --git a/cli/tsc/dts/lib.deno.window.d.ts b/cli/tsc/dts/lib.deno.window.d.ts
+index 83c385a..aeb96da 100644
+--- a/cli/tsc/dts/lib.deno.window.d.ts
++++ b/cli/tsc/dts/lib.deno.window.d.ts
+@@ -106,7 +106,6 @@ declare var caches: CacheStorage;
+ 
+ /** @category Web APIs */
+ declare interface Navigator {
+-  readonly gpu: GPU;
+   readonly hardwareConcurrency: number;
+   readonly userAgent: string;
+   readonly language: string;
+diff --git a/cli/tsc/dts/lib.deno.worker.d.ts b/cli/tsc/dts/lib.deno.worker.d.ts
+index d9e6634..0a0f57f 100644
+--- a/cli/tsc/dts/lib.deno.worker.d.ts
++++ b/cli/tsc/dts/lib.deno.worker.d.ts
+@@ -62,7 +62,6 @@ declare var WorkerGlobalScope: {
+ 
+ /** @category Web APIs */
+ declare interface WorkerNavigator {
+-  readonly gpu: GPU;
+   readonly hardwareConcurrency: number;
+   readonly userAgent: string;
+   readonly language: string;
+diff --git a/cli/tsc/mod.rs b/cli/tsc/mod.rs
+index 56755b5..decb485 100644
+--- a/cli/tsc/mod.rs
++++ b/cli/tsc/mod.rs
+@@ -91,10 +91,8 @@ pub fn get_types_declaration_file_text() -> String {
+     "deno.url",
+     "deno.web",
+     "deno.fetch",
+-    "deno.webgpu",
+     "deno.websocket",
+     "deno.webstorage",
+-    "deno.canvas",
+     "deno.crypto",
+     "deno.broadcast_channel",
+     "deno.net",
+diff --git a/ext/napi/lib.rs b/ext/napi/lib.rs
+index 5205978..c048524 100644
+--- a/ext/napi/lib.rs
++++ b/ext/napi/lib.rs
+@@ -409,29 +409,6 @@ impl Env {
+   }
+ }
+ 
+-deno_core::extension!(deno_napi,
+-  parameters = [P: NapiPermissions],
+-  ops = [
+-    op_napi_open<P>
+-  ],
+-  state = |state| {
+-    let (threadsafe_function_sender, threadsafe_function_receiver) =
+-      mpsc::unbounded::<ThreadSafeFunctionStatus>();
+-    state.put(NapiState {
+-      threadsafe_function_sender,
+-      threadsafe_function_receiver,
+-      active_threadsafe_functions: 0,
+-      env_cleanup_hooks: Rc::new(RefCell::new(vec![])),
+-      tsfn_ref_counters: Arc::new(Mutex::new(vec![])),
+-    });
+-  },
+-);
+-
+-pub trait NapiPermissions {
+-  fn check(&mut self, path: Option<&Path>)
+-    -> std::result::Result<(), AnyError>;
+-}
+-
+ /// # Safety
+ ///
+ /// This function is unsafe because it dereferences raw pointer Env.
+@@ -475,146 +452,3 @@ pub unsafe fn weak_local(
+ 
+   value
+ }
+-
+-#[op2]
+-fn op_napi_open<NP, 'scope>(
+-  scope: &mut v8::HandleScope<'scope>,
+-  op_state: Rc<RefCell<OpState>>,
+-  #[string] path: String,
+-  global: v8::Local<'scope, v8::Value>,
+-) -> std::result::Result<v8::Local<'scope, v8::Value>, AnyError>
+-where
+-  NP: NapiPermissions + 'static,
+-{
+-  // We must limit the OpState borrow because this function can trigger a
+-  // re-borrow through the NAPI module.
+-  let (
+-    async_work_sender,
+-    tsfn_sender,
+-    isolate_ptr,
+-    cleanup_hooks,
+-    tsfn_ref_counters,
+-  ) = {
+-    let mut op_state = op_state.borrow_mut();
+-    let permissions = op_state.borrow_mut::<NP>();
+-    permissions.check(Some(&PathBuf::from(&path)))?;
+-    let napi_state = op_state.borrow::<NapiState>();
+-    let isolate_ptr = op_state.borrow::<*mut v8::OwnedIsolate>();
+-    (
+-      op_state.borrow::<V8CrossThreadTaskSpawner>().clone(),
+-      napi_state.threadsafe_function_sender.clone(),
+-      *isolate_ptr,
+-      napi_state.env_cleanup_hooks.clone(),
+-      napi_state.tsfn_ref_counters.clone(),
+-    )
+-  };
+-
+-  let napi_wrap_name = v8::String::new(scope, "napi_wrap").unwrap();
+-  let napi_wrap = v8::Private::new(scope, Some(napi_wrap_name));
+-  let napi_wrap = v8::Global::new(scope, napi_wrap);
+-
+-  // The `module.exports` object.
+-  let exports = v8::Object::new(scope);
+-
+-  let mut env_shared = EnvShared::new(napi_wrap);
+-  let cstr = CString::new(&*path).unwrap();
+-  env_shared.filename = cstr.as_ptr();
+-  std::mem::forget(cstr);
+-
+-  let ctx = scope.get_current_context();
+-  let mut env = Env::new(
+-    isolate_ptr,
+-    v8::Global::new(scope, ctx),
+-    v8::Global::new(scope, global),
+-    async_work_sender,
+-    tsfn_sender,
+-    cleanup_hooks,
+-    tsfn_ref_counters,
+-  );
+-  env.shared = Box::into_raw(Box::new(env_shared));
+-  let env_ptr = Box::into_raw(Box::new(env)) as _;
+-
+-  #[cfg(unix)]
+-  let flags = RTLD_LAZY;
+-  #[cfg(not(unix))]
+-  let flags = 0x00000008;
+-
+-  // SAFETY: opening a DLL calls dlopen
+-  #[cfg(unix)]
+-  let library = match unsafe { Library::open(Some(&path), flags) } {
+-    Ok(lib) => lib,
+-    Err(e) => return Err(type_error(e.to_string())),
+-  };
+-
+-  // SAFETY: opening a DLL calls dlopen
+-  #[cfg(not(unix))]
+-  let library = match unsafe { Library::load_with_flags(&path, flags) } {
+-    Ok(lib) => lib,
+-    Err(e) => return Err(type_error(e.to_string())),
+-  };
+-
+-  let maybe_module = MODULE_TO_REGISTER.with(|cell| {
+-    let mut slot = cell.borrow_mut();
+-    slot.take()
+-  });
+-
+-  if let Some(module_to_register) = maybe_module {
+-    // SAFETY: napi_register_module guarantees that `module_to_register` is valid.
+-    let nm = unsafe { &*module_to_register };
+-    assert_eq!(nm.nm_version, 1);
+-    // SAFETY: we are going blind, calling the register function on the other side.
+-    let maybe_exports = unsafe {
+-      (nm.nm_register_func)(
+-        env_ptr,
+-        std::mem::transmute::<v8::Local<v8::Value>, napi_value>(exports.into()),
+-      )
+-    };
+-
+-    let exports = if maybe_exports.is_some() {
+-      // SAFETY: v8::Local is a pointer to a value and napi_value is also a pointer
+-      // to a value, they have the same layout
+-      unsafe {
+-        std::mem::transmute::<napi_value, v8::Local<v8::Value>>(maybe_exports)
+-      }
+-    } else {
+-      exports.into()
+-    };
+-
+-    // NAPI addons can't be unloaded, so we're going to "forget" the library
+-    // object so it lives till the program exit.
+-    std::mem::forget(library);
+-    return Ok(exports);
+-  }
+-
+-  // Initializer callback.
+-  // SAFETY: we are going blind, calling the register function on the other side.
+-
+-  let maybe_exports = unsafe {
+-    let Ok(init) = library
+-      .get::<unsafe extern "C" fn(
+-        env: napi_env,
+-        exports: napi_value,
+-      ) -> napi_value>(b"napi_register_module_v1") else {
+-        return Err(type_error(format!("Unable to find napi_register_module_v1 symbol in {}", path)));
+-      };
+-    init(
+-      env_ptr,
+-      std::mem::transmute::<v8::Local<v8::Value>, napi_value>(exports.into()),
+-    )
+-  };
+-
+-  let exports = if maybe_exports.is_some() {
+-    // SAFETY: v8::Local is a pointer to a value and napi_value is also a pointer
+-    // to a value, they have the same layout
+-    unsafe {
+-      std::mem::transmute::<napi_value, v8::Local<v8::Value>>(maybe_exports)
+-    }
+-  } else {
+-    exports.into()
+-  };
+-
+-  // NAPI addons can't be unloaded, so we're going to "forget" the library
+-  // object so it lives till the program exit.
+-  std::mem::forget(library);
+-  Ok(exports)
+-}
+diff --git a/ext/node/polyfills/01_require.js b/ext/node/polyfills/01_require.js
+index 81af706..1d0a0f5 100644
+--- a/ext/node/polyfills/01_require.js
++++ b/ext/node/polyfills/01_require.js
+@@ -4,7 +4,6 @@
+ 
+ import { core, internals, primordials } from "ext:core/mod.js";
+ import {
+-  op_napi_open,
+   op_require_as_file_path,
+   op_require_break_on_next_statement,
+   op_require_init_paths,
+@@ -1105,14 +1104,6 @@ Module._extensions[".json"] = function (module, filename) {
+   }
+ };
+ 
+-// Native extension for .node
+-Module._extensions[".node"] = function (module, filename) {
+-  if (filename.endsWith("fsevents.node")) {
+-    throw new Error("Using fsevents module is currently not supported");
+-  }
+-  module.exports = op_napi_open(filename, globalThis);
+-};
+-
+ function createRequireFromPath(filename) {
+   const proxyPath = op_require_proxy_path(filename);
+   const mod = new Module(proxyPath);
+diff --git a/runtime/Cargo.toml b/runtime/Cargo.toml
+index f9a7174..ba4a955 100644
+--- a/runtime/Cargo.toml
++++ b/runtime/Cargo.toml
+@@ -44,13 +44,11 @@ path = "examples/extension_with_ops/main.rs"
+ deno_ast.workspace = true
+ deno_broadcast_channel.workspace = true
+ deno_cache.workspace = true
+-deno_canvas.workspace = true
+ deno_console.workspace = true
+ deno_core.workspace = true
+ deno_cron.workspace = true
+ deno_crypto.workspace = true
+ deno_fetch.workspace = true
+-deno_ffi.workspace = true
+ deno_fs = { workspace = true, features = ["sync_fs"] }
+ deno_http.workspace = true
+ deno_io.workspace = true
+@@ -60,11 +58,9 @@ deno_kv.workspace = true
+ deno_tls.workspace = true
+ deno_url.workspace = true
+ deno_web.workspace = true
+-deno_webgpu.workspace = true
+ deno_webidl.workspace = true
+ deno_websocket.workspace = true
+ deno_webstorage.workspace = true
+-deno_napi.workspace = true
+ flate2 = { workspace = true, features = ["default"] }
+ serde.workspace = true
+ 
+@@ -76,25 +72,21 @@ winapi.workspace = true
+ deno_ast.workspace = true
+ deno_broadcast_channel.workspace = true
+ deno_cache.workspace = true
+-deno_canvas.workspace = true
+ deno_console.workspace = true
+ deno_core.workspace = true
+ deno_cron.workspace = true
+ deno_crypto.workspace = true
+ deno_fetch.workspace = true
+-deno_ffi.workspace = true
+ deno_fs = { workspace = true, features = ["sync_fs"] }
+ deno_http.workspace = true
+ deno_io.workspace = true
+ deno_kv.workspace = true
+-deno_napi.workspace = true
+ deno_net.workspace = true
+ deno_node.workspace = true
+ deno_terminal.workspace = true
+ deno_tls.workspace = true
+ deno_url.workspace = true
+ deno_web.workspace = true
+-deno_webgpu.workspace = true
+ deno_webidl.workspace = true
+ deno_websocket.workspace = true
+ deno_webstorage.workspace = true
+diff --git a/runtime/errors.rs b/runtime/errors.rs
+index 7f2e492..5822030 100644
+--- a/runtime/errors.rs
++++ b/runtime/errors.rs
+@@ -167,7 +167,6 @@ pub fn get_nix_error_class(error: &nix::Error) -> &'static str {
+ 
+ pub fn get_error_class_name(e: &AnyError) -> Option<&'static str> {
+   deno_core::error::get_custom_error_class(e)
+-    .or_else(|| deno_webgpu::error::get_error_class_name(e))
+     .or_else(|| deno_web::get_error_class_name(e))
+     .or_else(|| deno_webstorage::get_not_supported_error_class_name(e))
+     .or_else(|| deno_websocket::get_network_error_class_name(e))
+diff --git a/runtime/js/10_permissions.js b/runtime/js/10_permissions.js
+index 4e7d0d3..d35a63e 100644
+--- a/runtime/js/10_permissions.js
++++ b/runtime/js/10_permissions.js
+@@ -45,7 +45,6 @@ const permissionNames = [
+   "env",
+   "sys",
+   "run",
+-  "ffi",
+   "hrtime",
+ ];
+ 
+diff --git a/runtime/js/90_deno_ns.js b/runtime/js/90_deno_ns.js
+index 9f403e9..2bcc372 100644
+--- a/runtime/js/90_deno_ns.js
++++ b/runtime/js/90_deno_ns.js
+@@ -10,7 +10,6 @@ import {
+ import * as timers from "ext:deno_web/02_timers.js";
+ import * as httpClient from "ext:deno_fetch/22_http_client.js";
+ import * as console from "ext:deno_console/01_console.js";
+-import * as ffi from "ext:deno_ffi/00_ffi.js";
+ import * as net from "ext:deno_net/01_net.js";
+ import * as tls from "ext:deno_net/02_tls.js";
+ import * as http from "ext:deno_http/01_http.js";
+@@ -29,7 +28,6 @@ import * as tty from "ext:runtime/40_tty.js";
+ import * as httpRuntime from "ext:runtime/40_http.js";
+ import * as kv from "ext:deno_kv/01_db.ts";
+ import * as cron from "ext:deno_cron/01_cron.ts";
+-import * as webgpuSurface from "ext:deno_webgpu/02_surface.js";
+ 
+ const denoNs = {
+   metrics: () => {
+@@ -254,14 +252,12 @@ const denoNs = {
+ const unstableIds = {
+   broadcastChannel: 1,
+   cron: 2,
+-  ffi: 3,
+   fs: 4,
+   http: 5,
+   kv: 6,
+   net: 7,
+   temporal: 8,
+   unsafeProto: 9,
+-  webgpu: 10,
+   workerOptions: 11,
+ };
+ 
+@@ -273,14 +269,6 @@ denoNsUnstableById[unstableIds.cron] = {
+   cron: cron.cron,
+ };
+ 
+-denoNsUnstableById[unstableIds.ffi] = {
+-  dlopen: ffi.dlopen,
+-  UnsafeCallback: ffi.UnsafeCallback,
+-  UnsafePointer: ffi.UnsafePointer,
+-  UnsafePointerView: ffi.UnsafePointerView,
+-  UnsafeFnPointer: ffi.UnsafeFnPointer,
+-};
+-
+ denoNsUnstableById[unstableIds.fs] = {
+   flock: fs.flock,
+   flockSync: fs.flockSync,
+@@ -311,12 +299,6 @@ denoNsUnstableById[unstableIds.net] = {
+   ),
+ };
+ 
+-// denoNsUnstableById[unstableIds.unsafeProto] = {}
+-
+-denoNsUnstableById[unstableIds.webgpu] = {
+-  UnsafeWindowSurface: webgpuSurface.UnsafeWindowSurface,
+-};
+-
+ // denoNsUnstableById[unstableIds.workerOptions] = {}
+ 
+ // when editing this list, also update unstableDenoProps in cli/tsc/99_main_compiler.js
+@@ -330,12 +312,6 @@ const denoNsUnstable = {
+   createHttpClient: httpClient.createHttpClient,
+   // TODO(bartlomieju): why is it needed?
+   http,
+-  dlopen: ffi.dlopen,
+-  UnsafeCallback: ffi.UnsafeCallback,
+-  UnsafePointer: ffi.UnsafePointer,
+-  UnsafePointerView: ffi.UnsafePointerView,
+-  UnsafeFnPointer: ffi.UnsafeFnPointer,
+-  UnsafeWindowSurface: webgpuSurface.UnsafeWindowSurface,
+   flock: fs.flock,
+   flockSync: fs.flockSync,
+   funlock: fs.funlock,
+diff --git a/runtime/js/98_global_scope_shared.js b/runtime/js/98_global_scope_shared.js
+index aba0f37..c58295d 100644
+--- a/runtime/js/98_global_scope_shared.js
++++ b/runtime/js/98_global_scope_shared.js
+@@ -31,12 +31,8 @@ import * as webidl from "ext:deno_webidl/00_webidl.js";
+ import { DOMException } from "ext:deno_web/01_dom_exception.js";
+ import * as abortSignal from "ext:deno_web/03_abort_signal.js";
+ import * as imageData from "ext:deno_web/16_image_data.js";
+-import { loadWebGPU } from "ext:deno_webgpu/00_init.js";
+-import * as webgpuSurface from "ext:deno_webgpu/02_surface.js";
+ import { unstableIds } from "ext:runtime/90_deno_ns.js";
+ 
+-const loadImage = core.createLazyLoader("ext:deno_canvas/01_image.js");
+-
+ // https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope
+ const windowOrWorkerGlobalScope = {
+   AbortController: core.propNonEnumerable(abortSignal.AbortController),
+@@ -152,42 +148,5 @@ unstableForWindowOrWorkerGlobalScope[unstableIds.broadcastChannel] = {
+ unstableForWindowOrWorkerGlobalScope[unstableIds.net] = {
+   WebSocketStream: core.propNonEnumerable(webSocketStream.WebSocketStream),
+ };
+-// deno-fmt-ignore
+-unstableForWindowOrWorkerGlobalScope[unstableIds.webgpu] = {
+-  GPU: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPU, loadWebGPU),
+-  GPUAdapter: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUAdapter, loadWebGPU),
+-  GPUAdapterInfo: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUAdapterInfo, loadWebGPU),
+-  GPUSupportedLimits: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUSupportedLimits, loadWebGPU),
+-  GPUSupportedFeatures: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUSupportedFeatures, loadWebGPU),
+-  GPUDeviceLostInfo: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUDeviceLostInfo, loadWebGPU),
+-  GPUDevice: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUDevice, loadWebGPU),
+-  GPUQueue: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUQueue, loadWebGPU),
+-  GPUBuffer: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUBuffer, loadWebGPU),
+-  GPUBufferUsage: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUBufferUsage, loadWebGPU),
+-  GPUMapMode: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUMapMode, loadWebGPU),
+-  GPUTextureUsage: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUTextureUsage, loadWebGPU),
+-  GPUTexture: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUTexture, loadWebGPU),
+-  GPUTextureView: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUTextureView, loadWebGPU),
+-  GPUSampler: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUSampler, loadWebGPU),
+-  GPUBindGroupLayout: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUBindGroupLayout, loadWebGPU),
+-  GPUPipelineLayout: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUPipelineLayout, loadWebGPU),
+-  GPUBindGroup: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUBindGroup, loadWebGPU),
+-  GPUShaderModule: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUShaderModule, loadWebGPU),
+-  GPUShaderStage: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUShaderStage, loadWebGPU),
+-  GPUComputePipeline: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUComputePipeline, loadWebGPU),
+-  GPURenderPipeline: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPURenderPipeline, loadWebGPU),
+-  GPUColorWrite: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUColorWrite, loadWebGPU),
+-  GPUCommandEncoder: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUCommandEncoder, loadWebGPU),
+-  GPURenderPassEncoder: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPURenderPassEncoder, loadWebGPU),
+-  GPUComputePassEncoder: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUComputePassEncoder, loadWebGPU),
+-  GPUCommandBuffer: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUCommandBuffer, loadWebGPU),
+-  GPURenderBundleEncoder: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPURenderBundleEncoder, loadWebGPU),
+-  GPURenderBundle: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPURenderBundle, loadWebGPU),
+-  GPUQuerySet: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUQuerySet, loadWebGPU),
+-  GPUError: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUError, loadWebGPU),
+-  GPUValidationError: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUValidationError, loadWebGPU),
+-  GPUOutOfMemoryError: core.propNonEnumerableLazyLoaded((webgpu) => webgpu.GPUOutOfMemoryError, loadWebGPU),
+-  GPUCanvasContext: core.propNonEnumerable(webgpuSurface.GPUCanvasContext),
+-};
+ 
+ export { unstableForWindowOrWorkerGlobalScope, windowOrWorkerGlobalScope };
+diff --git a/runtime/js/98_global_scope_window.js b/runtime/js/98_global_scope_window.js
+index aa18ed3..54267f1 100644
+--- a/runtime/js/98_global_scope_window.js
++++ b/runtime/js/98_global_scope_window.js
+@@ -18,7 +18,6 @@ import * as webidl from "ext:deno_webidl/00_webidl.js";
+ import * as globalInterfaces from "ext:deno_web/04_global_interfaces.js";
+ import * as webStorage from "ext:deno_webstorage/01_webstorage.js";
+ import * as prompt from "ext:runtime/41_prompt.js";
+-import { loadWebGPU } from "ext:deno_webgpu/00_init.js";
+ 
+ class Navigator {
+   constructor() {
+@@ -59,15 +58,6 @@ const userAgent = memoizeLazy(() => op_bootstrap_user_agent());
+ const language = memoizeLazy(() => op_bootstrap_language());
+ 
+ ObjectDefineProperties(Navigator.prototype, {
+-  gpu: {
+-    configurable: true,
+-    enumerable: true,
+-    get() {
+-      webidl.assertBranded(this, NavigatorPrototype);
+-      const webgpu = loadWebGPU();
+-      return webgpu.gpu;
+-    },
+-  },
+   hardwareConcurrency: {
+     configurable: true,
+     enumerable: true,
+diff --git a/runtime/js/98_global_scope_worker.js b/runtime/js/98_global_scope_worker.js
+index 8e29210..05ae984 100644
+--- a/runtime/js/98_global_scope_worker.js
++++ b/runtime/js/98_global_scope_worker.js
+@@ -16,7 +16,6 @@ import * as location from "ext:deno_web/12_location.js";
+ import * as console from "ext:deno_console/01_console.js";
+ import * as webidl from "ext:deno_webidl/00_webidl.js";
+ import * as globalInterfaces from "ext:deno_web/04_global_interfaces.js";
+-import { loadWebGPU } from "ext:deno_webgpu/00_init.js";
+ 
+ function memoizeLazy(f) {
+   let v_ = null;
+@@ -57,15 +56,6 @@ class WorkerNavigator {
+ const workerNavigator = webidl.createBranded(WorkerNavigator);
+ 
+ ObjectDefineProperties(WorkerNavigator.prototype, {
+-  gpu: {
+-    configurable: true,
+-    enumerable: true,
+-    get() {
+-      webidl.assertBranded(this, WorkerNavigatorPrototype);
+-      const webgpu = loadWebGPU();
+-      return webgpu.gpu;
+-    },
+-  },
+   hardwareConcurrency: {
+     configurable: true,
+     enumerable: true,
+diff --git a/runtime/js/99_main.js b/runtime/js/99_main.js
+index 11c2679..11b59f3 100644
+--- a/runtime/js/99_main.js
++++ b/runtime/js/99_main.js
+@@ -583,7 +583,6 @@ const NOT_IMPORTED_OPS = [
+   // TODO(bartlomieju): used in various integration tests - figure out a way
+   // to not depend on them.
+   "op_set_exit_code",
+-  "op_napi_open",
+   "op_npm_process_state",
+ ];
+ 
+diff --git a/runtime/lib.rs b/runtime/lib.rs
+index b63fd41..ddae4e2 100644
+--- a/runtime/lib.rs
++++ b/runtime/lib.rs
+@@ -2,24 +2,20 @@
+ 
+ pub use deno_broadcast_channel;
+ pub use deno_cache;
+-pub use deno_canvas;
+ pub use deno_console;
+ pub use deno_core;
+ pub use deno_cron;
+ pub use deno_crypto;
+ pub use deno_fetch;
+-pub use deno_ffi;
+ pub use deno_fs;
+ pub use deno_http;
+ pub use deno_io;
+ pub use deno_kv;
+-pub use deno_napi;
+ pub use deno_net;
+ pub use deno_node;
+ pub use deno_tls;
+ pub use deno_url;
+ pub use deno_web;
+-pub use deno_webgpu;
+ pub use deno_webidl;
+ pub use deno_websocket;
+ pub use deno_webstorage;
+@@ -62,11 +58,6 @@ pub static UNSTABLE_GRANULAR_FLAGS: &[(
+     "Enable unstable Deno.cron API",
+     2,
+   ),
+-  (
+-    deno_ffi::UNSTABLE_FEATURE_NAME,
+-    "Enable unstable FFI APIs",
+-    3,
+-  ),
+   (
+     deno_fs::UNSTABLE_FEATURE_NAME,
+     "Enable unstable file system APIs",
+@@ -100,11 +91,6 @@ pub static UNSTABLE_GRANULAR_FLAGS: &[(
+     // for "unstableIds" to see where it's used.
+     9,
+   ),
+-  (
+-    deno_webgpu::UNSTABLE_FEATURE_NAME,
+-    "Enable unstable `WebGPU` API",
+-    10,
+-  ),
+   (
+     ops::worker_host::UNSTABLE_FEATURE_NAME,
+     "Enable unstable Web Worker APIs",
+diff --git a/runtime/ops/permissions.rs b/runtime/ops/permissions.rs
+index e6c4261..84b0be1 100644
+--- a/runtime/ops/permissions.rs
++++ b/runtime/ops/permissions.rs
+@@ -74,7 +74,6 @@ pub fn op_query_permission(
+       .sys
+       .query(args.kind.as_deref().map(parse_sys_kind).transpose()?),
+     "run" => permissions.run.query(args.command.as_deref()),
+-    "ffi" => permissions.ffi.query(args.path.as_deref().map(Path::new)),
+     "hrtime" => permissions.hrtime.query(),
+     n => {
+       return Err(custom_error(
+@@ -109,7 +108,6 @@ pub fn op_revoke_permission(
+       .sys
+       .revoke(args.kind.as_deref().map(parse_sys_kind).transpose()?),
+     "run" => permissions.run.revoke(args.command.as_deref()),
+-    "ffi" => permissions.ffi.revoke(args.path.as_deref().map(Path::new)),
+     "hrtime" => permissions.hrtime.revoke(),
+     n => {
+       return Err(custom_error(
+@@ -144,7 +142,6 @@ pub fn op_request_permission(
+       .sys
+       .request(args.kind.as_deref().map(parse_sys_kind).transpose()?),
+     "run" => permissions.run.request(args.command.as_deref()),
+-    "ffi" => permissions.ffi.request(args.path.as_deref().map(Path::new)),
+     "hrtime" => permissions.hrtime.request(),
+     n => {
+       return Err(custom_error(
+diff --git a/runtime/permissions/mod.rs b/runtime/permissions/mod.rs
+index 2cdbc60..7d73499 100644
+--- a/runtime/permissions/mod.rs
++++ b/runtime/permissions/mod.rs
+@@ -693,23 +693,6 @@ pub fn parse_sys_kind(kind: &str) -> Result<&str, AnyError> {
+   }
+ }
+ 
+-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+-pub struct FfiDescriptor(pub PathBuf);
+-
+-impl Descriptor for FfiDescriptor {
+-  fn flag_name() -> &'static str {
+-    "ffi"
+-  }
+-
+-  fn name(&self) -> Cow<str> {
+-    Cow::from(self.0.display().to_string())
+-  }
+-
+-  fn stronger_than(&self, other: &Self) -> bool {
+-    other.0.starts_with(&self.0)
+-  }
+-}
+-
+ impl UnaryPermission<ReadDescriptor> {
+   pub fn query(&self, path: Option<&Path>) -> PermissionState {
+     self.query_desc(
+@@ -992,53 +975,6 @@ impl UnaryPermission<RunDescriptor> {
+   }
+ }
+ 
+-impl UnaryPermission<FfiDescriptor> {
+-  pub fn query(&self, path: Option<&Path>) -> PermissionState {
+-    self.query_desc(
+-      &path.map(|p| FfiDescriptor(resolve_from_cwd(p).unwrap())),
+-      AllowPartial::TreatAsPartialGranted,
+-    )
+-  }
+-
+-  pub fn request(&mut self, path: Option<&Path>) -> PermissionState {
+-    self.request_desc(
+-      &path.map(|p| FfiDescriptor(resolve_from_cwd(p).unwrap())),
+-      || Some(path?.display().to_string()),
+-    )
+-  }
+-
+-  pub fn revoke(&mut self, path: Option<&Path>) -> PermissionState {
+-    self.revoke_desc(&path.map(|p| FfiDescriptor(resolve_from_cwd(p).unwrap())))
+-  }
+-
+-  pub fn check(
+-    &mut self,
+-    path: &Path,
+-    api_name: Option<&str>,
+-  ) -> Result<(), AnyError> {
+-    self.check_desc(
+-      &Some(FfiDescriptor(resolve_from_cwd(path)?)),
+-      true,
+-      api_name,
+-      || Some(format!("\"{}\"", path.display())),
+-    )
+-  }
+-
+-  pub fn check_partial(&mut self, path: Option<&Path>) -> Result<(), AnyError> {
+-    let desc = match path {
+-      Some(path) => Some(FfiDescriptor(resolve_from_cwd(path)?)),
+-      None => None,
+-    };
+-    self.check_desc(&desc, false, None, || {
+-      Some(format!("\"{}\"", path?.display()))
+-    })
+-  }
+-
+-  pub fn check_all(&mut self) -> Result<(), AnyError> {
+-    self.check_desc(&None, false, Some("all"), || None)
+-  }
+-}
+-
+ #[derive(Clone, Debug, Eq, PartialEq)]
+ pub struct Permissions {
+   pub read: UnaryPermission<ReadDescriptor>,
+@@ -1047,7 +983,6 @@ pub struct Permissions {
+   pub env: UnaryPermission<EnvDescriptor>,
+   pub sys: UnaryPermission<SysDescriptor>,
+   pub run: UnaryPermission<RunDescriptor>,
+-  pub ffi: UnaryPermission<FfiDescriptor>,
+   pub hrtime: UnitPermission,
+ }
+ 
+@@ -1060,7 +995,6 @@ impl Default for Permissions {
+       env: Permissions::new_env(&None, &None, false).unwrap(),
+       sys: Permissions::new_sys(&None, &None, false).unwrap(),
+       run: Permissions::new_run(&None, &None, false).unwrap(),
+-      ffi: Permissions::new_ffi(&None, &None, false).unwrap(),
+       hrtime: Permissions::new_hrtime(false, false),
+     }
+   }
+@@ -1074,8 +1008,6 @@ pub struct PermissionsOptions {
+   pub deny_hrtime: bool,
+   pub allow_net: Option<Vec<String>>,
+   pub deny_net: Option<Vec<String>>,
+-  pub allow_ffi: Option<Vec<PathBuf>>,
+-  pub deny_ffi: Option<Vec<PathBuf>>,
+   pub allow_read: Option<Vec<PathBuf>>,
+   pub deny_read: Option<Vec<PathBuf>>,
+   pub allow_run: Option<Vec<String>>,
+@@ -1178,21 +1110,6 @@ impl Permissions {
+     })
+   }
+ 
+-  pub fn new_ffi(
+-    allow_list: &Option<Vec<PathBuf>>,
+-    deny_list: &Option<Vec<PathBuf>>,
+-    prompt: bool,
+-  ) -> Result<UnaryPermission<FfiDescriptor>, AnyError> {
+-    Ok(UnaryPermission::<FfiDescriptor> {
+-      granted_global: global_from_option(allow_list),
+-      granted_list: parse_path_list(allow_list, FfiDescriptor)?,
+-      flag_denied_global: global_from_option(deny_list),
+-      flag_denied_list: parse_path_list(deny_list, FfiDescriptor)?,
+-      prompt,
+-      ..Default::default()
+-    })
+-  }
+-
+   pub fn new_hrtime(allow_state: bool, deny_state: bool) -> UnitPermission {
+     unit_permission_from_flag_bools(
+       allow_state,
+@@ -1219,7 +1136,6 @@ impl Permissions {
+       env: Permissions::new_env(&opts.allow_env, &opts.deny_env, opts.prompt)?,
+       sys: Permissions::new_sys(&opts.allow_sys, &opts.deny_sys, opts.prompt)?,
+       run: Permissions::new_run(&opts.allow_run, &opts.deny_run, opts.prompt)?,
+-      ffi: Permissions::new_ffi(&opts.allow_ffi, &opts.deny_ffi, opts.prompt)?,
+       hrtime: Permissions::new_hrtime(opts.allow_hrtime, opts.deny_hrtime),
+     })
+   }
+@@ -1232,7 +1148,6 @@ impl Permissions {
+       env: Permissions::new_env(&Some(vec![]), &None, false).unwrap(),
+       sys: Permissions::new_sys(&Some(vec![]), &None, false).unwrap(),
+       run: Permissions::new_run(&Some(vec![]), &None, false).unwrap(),
+-      ffi: Permissions::new_ffi(&Some(vec![]), &None, false).unwrap(),
+       hrtime: Permissions::new_hrtime(true, false),
+     }
+   }
+@@ -1517,22 +1432,6 @@ impl deno_fs::FsPermissions for PermissionsContainer {
+   }
+ }
+ 
+-// NOTE(bartlomieju): for now, NAPI uses `--allow-ffi` flag, but that might
+-// change in the future.
+-impl deno_napi::NapiPermissions for PermissionsContainer {
+-  #[inline(always)]
+-  fn check(&mut self, path: Option<&Path>) -> Result<(), AnyError> {
+-    self.0.lock().ffi.check(path.unwrap(), None)
+-  }
+-}
+-
+-impl deno_ffi::FfiPermissions for PermissionsContainer {
+-  #[inline(always)]
+-  fn check_partial(&mut self, path: Option<&Path>) -> Result<(), AnyError> {
+-    self.0.lock().ffi.check_partial(path)
+-  }
+-}
+-
+ impl deno_kv::sqlite::SqliteDbHandlerPermissions for PermissionsContainer {
+   #[inline(always)]
+   fn check_read(&mut self, p: &Path, api_name: &str) -> Result<(), AnyError> {
+@@ -1804,7 +1703,6 @@ pub struct ChildPermissionsArg {
+   env: ChildUnaryPermissionArg,
+   hrtime: ChildUnitPermissionArg,
+   net: ChildUnaryPermissionArg,
+-  ffi: ChildUnaryPermissionArg,
+   read: ChildUnaryPermissionArg,
+   run: ChildUnaryPermissionArg,
+   sys: ChildUnaryPermissionArg,
+@@ -1817,7 +1715,6 @@ impl ChildPermissionsArg {
+       env: ChildUnaryPermissionArg::Inherit,
+       hrtime: ChildUnitPermissionArg::Inherit,
+       net: ChildUnaryPermissionArg::Inherit,
+-      ffi: ChildUnaryPermissionArg::Inherit,
+       read: ChildUnaryPermissionArg::Inherit,
+       run: ChildUnaryPermissionArg::Inherit,
+       sys: ChildUnaryPermissionArg::Inherit,
+@@ -1830,7 +1727,6 @@ impl ChildPermissionsArg {
+       env: ChildUnaryPermissionArg::NotGranted,
+       hrtime: ChildUnitPermissionArg::NotGranted,
+       net: ChildUnaryPermissionArg::NotGranted,
+-      ffi: ChildUnaryPermissionArg::NotGranted,
+       read: ChildUnaryPermissionArg::NotGranted,
+       run: ChildUnaryPermissionArg::NotGranted,
+       sys: ChildUnaryPermissionArg::NotGranted,
+@@ -1895,11 +1791,6 @@ impl<'de> Deserialize<'de> for ChildPermissionsArg {
+             child_permissions_arg.net = arg.map_err(|e| {
+               de::Error::custom(format!("(deno.permissions.net) {e}"))
+             })?;
+-          } else if key == "ffi" {
+-            let arg = serde_json::from_value::<ChildUnaryPermissionArg>(value);
+-            child_permissions_arg.ffi = arg.map_err(|e| {
+-              de::Error::custom(format!("(deno.permissions.ffi) {e}"))
+-            })?;
+           } else if key == "read" {
+             let arg = serde_json::from_value::<ChildUnaryPermissionArg>(value);
+             child_permissions_arg.read = arg.map_err(|e| {
+@@ -2039,38 +1930,6 @@ pub fn create_child_permissions(
+   worker_perms.net.prompt_denied_list =
+     main_perms.net.prompt_denied_list.clone();
+   worker_perms.net.prompt = main_perms.net.prompt;
+-  match child_permissions_arg.ffi {
+-    ChildUnaryPermissionArg::Inherit => {
+-      worker_perms.ffi = main_perms.ffi.clone();
+-    }
+-    ChildUnaryPermissionArg::Granted => {
+-      if main_perms.ffi.check_all().is_err() {
+-        return Err(escalation_error());
+-      }
+-      worker_perms.ffi.granted_global = true;
+-    }
+-    ChildUnaryPermissionArg::NotGranted => {}
+-    ChildUnaryPermissionArg::GrantedList(granted_list) => {
+-      worker_perms.ffi.granted_list = parse_path_list(
+-        &Some(granted_list.iter().map(PathBuf::from).collect()),
+-        FfiDescriptor,
+-      )?;
+-      if !worker_perms
+-        .ffi
+-        .granted_list
+-        .iter()
+-        .all(|desc| main_perms.ffi.check(&desc.0, None).is_ok())
+-      {
+-        return Err(escalation_error());
+-      }
+-    }
+-  }
+-  worker_perms.ffi.flag_denied_global = main_perms.env.flag_denied_global;
+-  worker_perms.ffi.flag_denied_list = main_perms.ffi.flag_denied_list.clone();
+-  worker_perms.ffi.prompt_denied_global = main_perms.ffi.prompt_denied_global;
+-  worker_perms.ffi.prompt_denied_list =
+-    main_perms.ffi.prompt_denied_list.clone();
+-  worker_perms.ffi.prompt = main_perms.ffi.prompt;
+   match child_permissions_arg.read {
+     ChildUnaryPermissionArg::Inherit => {
+       worker_perms.read = main_perms.read.clone();
+@@ -2192,7 +2051,6 @@ mod tests {
+     let mut perms = Permissions::from_options(&PermissionsOptions {
+       allow_read: Some(allowlist.clone()),
+       allow_write: Some(allowlist.clone()),
+-      allow_ffi: Some(allowlist),
+       ..Default::default()
+     })
+     .unwrap();
+@@ -2206,10 +2064,6 @@ mod tests {
+       .write
+       .check(Path::new("/a/specific/dir/name"), None)
+       .is_ok());
+-    assert!(perms
+-      .ffi
+-      .check(Path::new("/a/specific/dir/name"), None)
+-      .is_ok());
+ 
+     // Inside of /a/specific but outside of /a/specific/dir/name
+     assert!(perms.read.check(Path::new("/a/specific/dir"), None).is_ok());
+@@ -2217,7 +2071,6 @@ mod tests {
+       .write
+       .check(Path::new("/a/specific/dir"), None)
+       .is_ok());
+-    assert!(perms.ffi.check(Path::new("/a/specific/dir"), None).is_ok());
+ 
+     // Inside of /a/specific and /a/specific/dir/name
+     assert!(perms
+@@ -2228,10 +2081,6 @@ mod tests {
+       .write
+       .check(Path::new("/a/specific/dir/name/inner"), None)
+       .is_ok());
+-    assert!(perms
+-      .ffi
+-      .check(Path::new("/a/specific/dir/name/inner"), None)
+-      .is_ok());
+ 
+     // Inside of /a/specific but outside of /a/specific/dir/name
+     assert!(perms
+@@ -2242,20 +2091,14 @@ mod tests {
+       .write
+       .check(Path::new("/a/specific/other/dir"), None)
+       .is_ok());
+-    assert!(perms
+-      .ffi
+-      .check(Path::new("/a/specific/other/dir"), None)
+-      .is_ok());
+ 
+     // Exact match with /b/c
+     assert!(perms.read.check(Path::new("/b/c"), None).is_ok());
+     assert!(perms.write.check(Path::new("/b/c"), None).is_ok());
+-    assert!(perms.ffi.check(Path::new("/b/c"), None).is_ok());
+ 
+     // Sub path within /b/c
+     assert!(perms.read.check(Path::new("/b/c/sub/path"), None).is_ok());
+     assert!(perms.write.check(Path::new("/b/c/sub/path"), None).is_ok());
+-    assert!(perms.ffi.check(Path::new("/b/c/sub/path"), None).is_ok());
+ 
+     // Sub path within /b/c, needs normalizing
+     assert!(perms
+@@ -2266,20 +2109,14 @@ mod tests {
+       .write
+       .check(Path::new("/b/c/sub/path/../path/."), None)
+       .is_ok());
+-    assert!(perms
+-      .ffi
+-      .check(Path::new("/b/c/sub/path/../path/."), None)
+-      .is_ok());
+ 
+     // Inside of /b but outside of /b/c
+     assert!(perms.read.check(Path::new("/b/e"), None).is_err());
+     assert!(perms.write.check(Path::new("/b/e"), None).is_err());
+-    assert!(perms.ffi.check(Path::new("/b/e"), None).is_err());
+ 
+     // Inside of /a but outside of /a/specific
+     assert!(perms.read.check(Path::new("/a/b"), None).is_err());
+     assert!(perms.write.check(Path::new("/a/b"), None).is_err());
+-    assert!(perms.ffi.check(Path::new("/a/b"), None).is_err());
+   }
+ 
+   #[test]
+@@ -2561,12 +2398,6 @@ mod tests {
+         false,
+       )
+       .unwrap(),
+-      ffi: Permissions::new_ffi(
+-        &Some(vec![PathBuf::from("/foo")]),
+-        &None,
+-        false,
+-      )
+-      .unwrap(),
+       net: Permissions::new_net(&Some(svec!["127.0.0.1:8000"]), &None, false)
+         .unwrap(),
+       env: Permissions::new_env(&Some(svec!["HOME"]), &None, false).unwrap(),
+@@ -2588,12 +2419,6 @@ mod tests {
+         false,
+       )
+       .unwrap(),
+-      ffi: Permissions::new_ffi(
+-        &None,
+-        &Some(vec![PathBuf::from("/foo")]),
+-        false,
+-      )
+-      .unwrap(),
+       net: Permissions::new_net(&None, &Some(svec!["127.0.0.1:8000"]), false)
+         .unwrap(),
+       env: Permissions::new_env(&None, &Some(svec!["HOME"]), false).unwrap(),
+@@ -2615,12 +2440,6 @@ mod tests {
+         false,
+       )
+       .unwrap(),
+-      ffi: Permissions::new_ffi(
+-        &Some(vec![]),
+-        &Some(vec![PathBuf::from("/foo")]),
+-        false,
+-      )
+-      .unwrap(),
+       net: Permissions::new_net(
+         &Some(vec![]),
+         &Some(svec!["127.0.0.1:8000"]),
+@@ -2661,18 +2480,6 @@ mod tests {
+       assert_eq!(perms4.write.query(Some(Path::new("/foo"))), PermissionState::Denied);
+       assert_eq!(perms4.write.query(Some(Path::new("/foo/bar"))), PermissionState::Denied);
+       assert_eq!(perms4.write.query(Some(Path::new("/bar"))), PermissionState::Granted);
+-      assert_eq!(perms1.ffi.query(None), PermissionState::Granted);
+-      assert_eq!(perms1.ffi.query(Some(Path::new("/foo"))), PermissionState::Granted);
+-      assert_eq!(perms2.ffi.query(None), PermissionState::Prompt);
+-      assert_eq!(perms2.ffi.query(Some(Path::new("/foo"))), PermissionState::Granted);
+-      assert_eq!(perms2.ffi.query(Some(Path::new("/foo/bar"))), PermissionState::Granted);
+-      assert_eq!(perms3.ffi.query(None), PermissionState::Prompt);
+-      assert_eq!(perms3.ffi.query(Some(Path::new("/foo"))), PermissionState::Denied);
+-      assert_eq!(perms3.ffi.query(Some(Path::new("/foo/bar"))), PermissionState::Denied);
+-      assert_eq!(perms4.ffi.query(None), PermissionState::GrantedPartial);
+-      assert_eq!(perms4.ffi.query(Some(Path::new("/foo"))), PermissionState::Denied);
+-      assert_eq!(perms4.ffi.query(Some(Path::new("/foo/bar"))), PermissionState::Denied);
+-      assert_eq!(perms4.ffi.query(Some(Path::new("/bar"))), PermissionState::Granted);
+       assert_eq!(perms1.net.query::<&str>(None), PermissionState::Granted);
+       assert_eq!(perms1.net.query(Some(&("127.0.0.1", None))), PermissionState::Granted);
+       assert_eq!(perms2.net.query::<&str>(None), PermissionState::Prompt);
+@@ -2734,10 +2541,7 @@ mod tests {
+       prompt_value.set(true);
+       assert_eq!(perms.write.request(None), PermissionState::Denied);
+       prompt_value.set(false);
+-      assert_eq!(perms.ffi.request(Some(Path::new("/foo"))), PermissionState::Denied);
+-      assert_eq!(perms.ffi.query(Some(Path::new("/foo/bar"))), PermissionState::Prompt);
+       prompt_value.set(true);
+-      assert_eq!(perms.ffi.request(None), PermissionState::Denied);
+       prompt_value.set(true);
+       assert_eq!(perms.net.request(Some(&("127.0.0.1", None))), PermissionState::Granted);
+       prompt_value.set(false);
+@@ -2780,12 +2584,6 @@ mod tests {
+         false,
+       )
+       .unwrap(),
+-      ffi: Permissions::new_ffi(
+-        &Some(vec![PathBuf::from("/foo"), PathBuf::from("/foo/baz")]),
+-        &None,
+-        false,
+-      )
+-      .unwrap(),
+       net: Permissions::new_net(
+         &Some(svec!["127.0.0.1", "127.0.0.1:8000"]),
+         &None,
+@@ -2806,9 +2604,6 @@ mod tests {
+       assert_eq!(perms.write.revoke(Some(Path::new("/foo/bar"))), PermissionState::Prompt);
+       assert_eq!(perms.write.query(Some(Path::new("/foo"))), PermissionState::Prompt);
+       assert_eq!(perms.write.query(Some(Path::new("/foo/baz"))), PermissionState::Granted);
+-      assert_eq!(perms.ffi.revoke(Some(Path::new("/foo/bar"))), PermissionState::Prompt);
+-      assert_eq!(perms.ffi.query(Some(Path::new("/foo"))), PermissionState::Prompt);
+-      assert_eq!(perms.ffi.query(Some(Path::new("/foo/baz"))), PermissionState::Granted);
+       assert_eq!(perms.net.revoke(Some(&("127.0.0.1", Some(9000)))), PermissionState::Prompt);
+       assert_eq!(perms.net.query(Some(&("127.0.0.1", None))), PermissionState::Prompt);
+       assert_eq!(perms.net.query(Some(&("127.0.0.1", Some(8000)))), PermissionState::Granted);
+@@ -2829,7 +2624,6 @@ mod tests {
+       env: Permissions::new_env(&None, &None, true).unwrap(),
+       sys: Permissions::new_sys(&None, &None, true).unwrap(),
+       run: Permissions::new_run(&None, &None, true).unwrap(),
+-      ffi: Permissions::new_ffi(&None, &None, true).unwrap(),
+       hrtime: Permissions::new_hrtime(false, false),
+     };
+ 
+@@ -2848,10 +2642,7 @@ mod tests {
+     assert!(perms.write.check(Path::new("/bar"), None).is_err());
+ 
+     prompt_value.set(true);
+-    assert!(perms.ffi.check(Path::new("/foo"), None).is_ok());
+     prompt_value.set(false);
+-    assert!(perms.ffi.check(Path::new("/foo"), None).is_ok());
+-    assert!(perms.ffi.check(Path::new("/bar"), None).is_err());
+ 
+     prompt_value.set(true);
+     assert!(perms.net.check(&("127.0.0.1", Some(8000)), None).is_ok());
+@@ -2893,7 +2684,6 @@ mod tests {
+       env: Permissions::new_env(&None, &None, true).unwrap(),
+       sys: Permissions::new_sys(&None, &None, true).unwrap(),
+       run: Permissions::new_run(&None, &None, true).unwrap(),
+-      ffi: Permissions::new_ffi(&None, &None, true).unwrap(),
+       hrtime: Permissions::new_hrtime(false, false),
+     };
+ 
+@@ -2916,12 +2706,8 @@ mod tests {
+     assert!(perms.write.check(Path::new("/bar"), None).is_ok());
+ 
+     prompt_value.set(false);
+-    assert!(perms.ffi.check(Path::new("/foo"), None).is_err());
+     prompt_value.set(true);
+-    assert!(perms.ffi.check(Path::new("/foo"), None).is_err());
+-    assert!(perms.ffi.check(Path::new("/bar"), None).is_ok());
+     prompt_value.set(false);
+-    assert!(perms.ffi.check(Path::new("/bar"), None).is_ok());
+ 
+     prompt_value.set(false);
+     assert!(perms.net.check(&("127.0.0.1", Some(8000)), None).is_err());
+@@ -2992,7 +2778,6 @@ mod tests {
+         env: ChildUnaryPermissionArg::Inherit,
+         hrtime: ChildUnitPermissionArg::Inherit,
+         net: ChildUnaryPermissionArg::Inherit,
+-        ffi: ChildUnaryPermissionArg::Inherit,
+         read: ChildUnaryPermissionArg::Inherit,
+         run: ChildUnaryPermissionArg::Inherit,
+         sys: ChildUnaryPermissionArg::Inherit,
+@@ -3005,7 +2790,6 @@ mod tests {
+         env: ChildUnaryPermissionArg::NotGranted,
+         hrtime: ChildUnitPermissionArg::NotGranted,
+         net: ChildUnaryPermissionArg::NotGranted,
+-        ffi: ChildUnaryPermissionArg::NotGranted,
+         read: ChildUnaryPermissionArg::NotGranted,
+         run: ChildUnaryPermissionArg::NotGranted,
+         sys: ChildUnaryPermissionArg::NotGranted,
+@@ -3058,7 +2842,6 @@ mod tests {
+       serde_json::from_value::<ChildPermissionsArg>(json!({
+         "env": true,
+         "net": true,
+-        "ffi": true,
+         "read": true,
+         "run": true,
+         "sys": true,
+@@ -3068,7 +2851,6 @@ mod tests {
+       ChildPermissionsArg {
+         env: ChildUnaryPermissionArg::Granted,
+         net: ChildUnaryPermissionArg::Granted,
+-        ffi: ChildUnaryPermissionArg::Granted,
+         read: ChildUnaryPermissionArg::Granted,
+         run: ChildUnaryPermissionArg::Granted,
+         sys: ChildUnaryPermissionArg::Granted,
+@@ -3080,7 +2862,6 @@ mod tests {
+       serde_json::from_value::<ChildPermissionsArg>(json!({
+         "env": false,
+         "net": false,
+-        "ffi": false,
+         "read": false,
+         "run": false,
+         "sys": false,
+@@ -3090,7 +2871,6 @@ mod tests {
+       ChildPermissionsArg {
+         env: ChildUnaryPermissionArg::NotGranted,
+         net: ChildUnaryPermissionArg::NotGranted,
+-        ffi: ChildUnaryPermissionArg::NotGranted,
+         read: ChildUnaryPermissionArg::NotGranted,
+         run: ChildUnaryPermissionArg::NotGranted,
+         sys: ChildUnaryPermissionArg::NotGranted,
+@@ -3102,7 +2882,6 @@ mod tests {
+       serde_json::from_value::<ChildPermissionsArg>(json!({
+         "env": ["foo", "bar"],
+         "net": ["foo", "bar:8000"],
+-        "ffi": ["foo", "file:///bar/baz"],
+         "read": ["foo", "file:///bar/baz"],
+         "run": ["foo", "file:///bar/baz", "./qux"],
+         "sys": ["hostname", "osRelease"],
+@@ -3112,10 +2891,6 @@ mod tests {
+       ChildPermissionsArg {
+         env: ChildUnaryPermissionArg::GrantedList(svec!["foo", "bar"]),
+         net: ChildUnaryPermissionArg::GrantedList(svec!["foo", "bar:8000"]),
+-        ffi: ChildUnaryPermissionArg::GrantedList(svec![
+-          "foo",
+-          "file:///bar/baz"
+-        ]),
+         read: ChildUnaryPermissionArg::GrantedList(svec![
+           "foo",
+           "file:///bar/baz"
+@@ -3155,7 +2930,6 @@ mod tests {
+           env: ChildUnaryPermissionArg::Inherit,
+           hrtime: ChildUnitPermissionArg::NotGranted,
+           net: ChildUnaryPermissionArg::GrantedList(svec!["foo"]),
+-          ffi: ChildUnaryPermissionArg::NotGranted,
+           ..ChildPermissionsArg::none()
+         }
+       )
+@@ -3185,7 +2959,6 @@ mod tests {
+     assert!(create_child_permissions(
+       &mut main_perms,
+       ChildPermissionsArg {
+-        ffi: ChildUnaryPermissionArg::GrantedList(svec!["foo"]),
+         ..ChildPermissionsArg::none()
+       }
+     )
+@@ -3251,9 +3024,6 @@ mod tests {
+     assert!(
+       Permissions::new_run(&Some(vec![String::new()]), &None, false).is_err()
+     );
+-    assert!(
+-      Permissions::new_ffi(&Some(vec![PathBuf::new()]), &None, false).is_err()
+-    );
+     assert!(
+       Permissions::new_net(&Some(svec![String::new()]), &None, false).is_err()
+     );
+diff --git a/runtime/shared.rs b/runtime/shared.rs
+index 04fcdcf..6f209bd 100644
+--- a/runtime/shared.rs
++++ b/runtime/shared.rs
+@@ -25,9 +25,7 @@ extension!(runtime,
+     deno_crypto,
+     deno_broadcast_channel,
+     deno_node,
+-    deno_ffi,
+     deno_net,
+-    deno_napi,
+     deno_http,
+     deno_io,
+     deno_fs
+diff --git a/runtime/snapshot.rs b/runtime/snapshot.rs
+index 3a9d670..51c3a48 100644
+--- a/runtime/snapshot.rs
++++ b/runtime/snapshot.rs
+@@ -51,24 +51,6 @@ impl deno_web::TimersPermission for Permissions {
+   }
+ }
+ 
+-impl deno_ffi::FfiPermissions for Permissions {
+-  fn check_partial(
+-    &mut self,
+-    _path: Option<&Path>,
+-  ) -> Result<(), deno_core::error::AnyError> {
+-    unreachable!("snapshotting!")
+-  }
+-}
+-
+-impl deno_napi::NapiPermissions for Permissions {
+-  fn check(
+-    &mut self,
+-    _path: Option<&Path>,
+-  ) -> Result<(), deno_core::error::AnyError> {
+-    unreachable!("snapshotting!")
+-  }
+-}
+-
+ impl deno_node::NodePermissions for Permissions {
+   fn check_net_url(
+     &mut self,
+@@ -211,8 +193,6 @@ pub fn create_runtime_snapshot(
+       Default::default(),
+       Default::default(),
+     ),
+-    deno_webgpu::deno_webgpu::init_ops_and_esm(),
+-    deno_canvas::deno_canvas::init_ops_and_esm(),
+     deno_fetch::deno_fetch::init_ops_and_esm::<Permissions>(Default::default()),
+     deno_cache::deno_cache::init_ops_and_esm::<SqliteBackedCache>(None),
+     deno_websocket::deno_websocket::init_ops_and_esm::<Permissions>(
+@@ -225,7 +205,6 @@ pub fn create_runtime_snapshot(
+     deno_broadcast_channel::deno_broadcast_channel::init_ops_and_esm(
+       deno_broadcast_channel::InMemoryBroadcastChannel::default(),
+     ),
+-    deno_ffi::deno_ffi::init_ops_and_esm::<Permissions>(),
+     deno_net::deno_net::init_ops_and_esm::<Permissions>(None, None),
+     deno_tls::deno_tls::init_ops_and_esm(),
+     deno_kv::deno_kv::init_ops_and_esm(deno_kv::sqlite::SqliteDbHandler::<
+@@ -234,7 +213,6 @@ pub fn create_runtime_snapshot(
+     deno_cron::deno_cron::init_ops_and_esm(
+       deno_cron::local::LocalCronHandler::new(),
+     ),
+-    deno_napi::deno_napi::init_ops_and_esm::<Permissions>(),
+     deno_http::deno_http::init_ops_and_esm::<DefaultHttpPropertyExtractor>(),
+     deno_io::deno_io::init_ops_and_esm(Default::default()),
+     deno_fs::deno_fs::init_ops_and_esm::<Permissions>(fs.clone()),
+diff --git a/runtime/web_worker.rs b/runtime/web_worker.rs
+index a69c384..aedc4c6 100644
+--- a/runtime/web_worker.rs
++++ b/runtime/web_worker.rs
+@@ -410,8 +410,6 @@ impl WebWorker {
+         options.blob_store.clone(),
+         Some(main_module.clone()),
+       ),
+-      deno_webgpu::deno_webgpu::init_ops_and_esm(),
+-      deno_canvas::deno_canvas::init_ops_and_esm(),
+       deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(
+         deno_fetch::Options {
+           user_agent: options.bootstrap.user_agent.clone(),
+@@ -436,7 +434,6 @@ impl WebWorker {
+       deno_broadcast_channel::deno_broadcast_channel::init_ops_and_esm(
+         options.broadcast_channel.clone(),
+       ),
+-      deno_ffi::deno_ffi::init_ops_and_esm::<PermissionsContainer>(),
+       deno_net::deno_net::init_ops_and_esm::<PermissionsContainer>(
+         options.root_cert_store_provider.clone(),
+         options.unsafely_ignore_certificate_errors.clone(),
+@@ -458,7 +455,6 @@ impl WebWorker {
+         ),
+       ),
+       deno_cron::deno_cron::init_ops_and_esm(LocalCronHandler::new()),
+-      deno_napi::deno_napi::init_ops_and_esm::<PermissionsContainer>(),
+       deno_http::deno_http::init_ops_and_esm::<DefaultHttpPropertyExtractor>(),
+       deno_io::deno_io::init_ops_and_esm(Some(options.stdio)),
+       deno_fs::deno_fs::init_ops_and_esm::<PermissionsContainer>(
+diff --git a/runtime/worker.rs b/runtime/worker.rs
+index b6aff3c..0ed2280 100644
+--- a/runtime/worker.rs
++++ b/runtime/worker.rs
+@@ -345,8 +345,6 @@ impl MainWorker {
+         options.blob_store.clone(),
+         options.bootstrap.location.clone(),
+       ),
+-      deno_webgpu::deno_webgpu::init_ops_and_esm(),
+-      deno_canvas::deno_canvas::init_ops_and_esm(),
+       deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(
+         deno_fetch::Options {
+           user_agent: options.bootstrap.user_agent.clone(),
+@@ -373,7 +371,6 @@ impl MainWorker {
+       deno_broadcast_channel::deno_broadcast_channel::init_ops_and_esm(
+         options.broadcast_channel.clone(),
+       ),
+-      deno_ffi::deno_ffi::init_ops_and_esm::<PermissionsContainer>(),
+       deno_net::deno_net::init_ops_and_esm::<PermissionsContainer>(
+         options.root_cert_store_provider.clone(),
+         options.unsafely_ignore_certificate_errors.clone(),
+@@ -395,7 +392,6 @@ impl MainWorker {
+         ),
+       ),
+       deno_cron::deno_cron::init_ops_and_esm(LocalCronHandler::new()),
+-      deno_napi::deno_napi::init_ops_and_esm::<PermissionsContainer>(),
+       deno_http::deno_http::init_ops_and_esm::<DefaultHttpPropertyExtractor>(),
+       deno_io::deno_io::init_ops_and_esm(Some(options.stdio)),
+       deno_fs::deno_fs::init_ops_and_esm::<PermissionsContainer>(
+diff --git a/rust-toolchain.toml b/rust-toolchain.toml
+deleted file mode 100644
+index a436857..0000000
+--- a/rust-toolchain.toml
++++ /dev/null
+@@ -1,3 +0,0 @@
+-[toolchain]
+-channel = "1.76.0"
+-components = ["rustfmt", "clippy"]

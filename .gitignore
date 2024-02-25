@@ -1,0 +1,3 @@
+deno/
+lib_v8/
+snapshot_bin/
