@@ -1,0 +1,97 @@
+name: build v8 0.83
+
+on:
+  push:
+    branches: [ "v8-0.83" ]
+
+jobs:
+  # build `rusty_v8 0.83` for `aarch64-linux-android`
+  build_android:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+
+    - run: cargo fetch
+    # symlink `cargo_src` -> ~/.cargo/registry/src/XXX/
+    - run: cargo metadata | deno run -A get_cargo_src.js
+
+    # FIXME: we have to checkout v8 source, because there is missing files in rusty_v8
+    #### start checkout v8 source
+    - run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git --single-branch --depth=1
+    - run: export PATH=$(pwd)/depot_tools:$PATH && echo $PATH && mkdir v8
+
+    # https://v8.dev/docs/source-code
+    - run: export PATH=$(pwd)/depot_tools:$PATH && cd v8 && gclient
+    - run: export PATH=$(pwd)/depot_tools:$PATH && cd v8 && fetch v8
+
+    # https://v8.dev/docs/cross-compile-arm
+    - run: echo "target_os = ['android']" >> v8/.gclient
+    - run: cat v8/.gclient
+
+    - run: export PATH=$(pwd)/depot_tools:$PATH && cd v8 && gclient sync
+    #### done checkout v8 source
+
+    # copy missing files
+    - run: cp -r cargo_src/v8-0.83.2 v8_src
+    - run: cp -rn v8/v8/build/android v8_src/build || true
+
+    # build
+    - run: cd v8_src && rustup target add aarch64-linux-android
+    - run: cd v8_src && V8_FROM_SOURCE=1 cargo build -vv --release --target aarch64-linux-android
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: librusty_v8_release_aarch64-linux-android.a
+        path: v8_src/target/aarch64-linux-android/release/gn_out/obj/librusty_v8.a
+
+  # build `rusty_v8 0.83` for `x86_64-linux-android`
+  build_x86_64:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+
+    - run: cargo fetch
+    # symlink `cargo_src` -> ~/.cargo/registry/src/XXX/
+    - run: cargo metadata | deno run -A get_cargo_src.js
+
+    - run: cp -r cargo_src/v8-0.83.2 v8_src
+    # apply patch
+    - run: cd v8_src && patch -p1 < ../patch/p1.patch
+
+    # FIXME: we have to checkout v8 source, because there is missing files in rusty_v8
+    #### start checkout v8 source
+    - run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git --single-branch --depth=1
+    - run: export PATH=$(pwd)/depot_tools:$PATH && echo $PATH && mkdir v8
+
+    # https://v8.dev/docs/source-code
+    - run: export PATH=$(pwd)/depot_tools:$PATH && cd v8 && gclient
+    - run: export PATH=$(pwd)/depot_tools:$PATH && cd v8 && fetch v8
+
+    # https://v8.dev/docs/cross-compile-arm
+    - run: echo "target_os = ['android']" >> v8/.gclient
+    - run: cat v8/.gclient
+
+    - run: export PATH=$(pwd)/depot_tools:$PATH && cd v8 && gclient sync
+    #### done checkout v8 source
+
+    # copy missing files
+    - run: cp -rn v8/v8/build/android v8_src/build || true
+
+    # build
+    - run: cd v8_src && rustup target add x86_64-linux-android
+    - run: cd v8_src && V8_FROM_SOURCE=1 cargo build -vv --release --target x86_64-linux-android
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: librusty_v8_release_x86_64-linux-android.a
+        path: v8_src/target/x86_64-linux-android/release/gn_out/obj/librusty_v8.a
+
+# TODO

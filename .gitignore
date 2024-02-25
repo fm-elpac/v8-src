@@ -1,0 +1,6 @@
+/target
+/Cargo.lock
+
+/cargo_src
+/v8_src-1
+/v8_src
