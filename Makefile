@@ -1,4 +1,5 @@
 # build deno for `aarch64-linux-android`
+.PHONY: deno
 deno:
 	export RUSTY_V8_MIRROR=$$(pwd)/lib_v8 && \
 	export PATH=$$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$$PATH && \
